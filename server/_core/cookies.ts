@@ -42,7 +42,11 @@ export function getSessionCookieOptions(
   return {
     httpOnly: true,
     path: "/",
-    sameSite: "none",
-    secure: isSecureRequest(req),
+    // The application and its API share the same origin. Lax is therefore
+    // sufficient and more durable on mobile browsers than a cross-site None
+    // cookie. In production the public site is always HTTPS, even when TLS is
+    // terminated before Express, so the cookie must never be downgraded.
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production" || isSecureRequest(req),
   };
 }

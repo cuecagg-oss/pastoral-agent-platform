@@ -29,7 +29,9 @@ export function registerOAuthRoutes(app: Express) {
       res.status(403).json({ error: "invalid oauth state" });
       return;
     }
-    res.clearCookie(OAUTH_STATE_COOKIE, { path: "/", secure: true, sameSite: "none" });
+    // Keep the clearing options aligned with the host-only state cookie minted
+    // by the client. Do not set Domain: __Host- cookies must remain host-only.
+    res.clearCookie(OAUTH_STATE_COOKIE, getSessionCookieOptions(req));
 
     try {
       const tokenResponse = await sdk.exchangeCodeForToken(code, state);

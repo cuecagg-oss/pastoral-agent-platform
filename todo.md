@@ -30,6 +30,8 @@
 - [x] Mapear `audio/mp4` de navegadores móveis para extensão `.m4a` compatível com a transcrição e cobrir o mapeamento em teste.
 - [ ] Validar em dispositivo móvel autenticado a gravação e transcrição após o mapeamento `audio/mp4` para `.m4a`.
 - [ ] Se a transcrição móvel ainda falhar, instrumentar e corrigir o feedback específico de MIME, codec ou provedor exibido ao usuário.
+- [ ] Confirmar em dispositivo móvel autenticado que a correção da sessão Manus OAuth persiste após callback, atualização e navegação entre dashboard e chat.
+- [ ] Se a sessão móvel ainda falhar, instrumentar callback e autenticação para distinguir cookie bloqueado, cookie ausente pós-callback e navegador incompatível, exibindo orientação acionável.
 - [x] Adicionar e validar um estado vazio explícito no dashboard para uma igreja sem registros pastorais.
 - [x] Diagnosticar e corrigir a falha no envio de mensagem de voz reportada em celular, incluindo feedback acionável para permissões, upload e transcrição.
 - [x] Comparar requisitos funcionais e de segurança com o schema, procedimentos, interface e documentação do MVP.
