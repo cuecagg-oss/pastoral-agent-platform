@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { AgentCore } from "./agentCore";
-import { AuthorizationError, ToolUnavailableError } from "./policy";
+import { AuthorizationError } from "./policy";
 import { pastoralToolCatalog } from "./toolCatalog";
 import type { PastoralRepository, TenantContext, ToolCatalogEntry, ToolResult } from "./types";
 import { createVoiceHistoryEntry, VOICE_HISTORY_LABEL } from "./voiceUploadRoute";
@@ -107,17 +107,21 @@ describe("Agent Core pastoral", () => {
     expect(repository.audits).toContainEqual(expect.objectContaining({ action: "followup.prepare", status: "denied", result: "role_not_authorized", confirmationStatus: "denied" }));
   });
 
-  it("recusa ferramenta desabilitada antes de consultar dados e audita a decisão", async () => {
+  it("responde com indisponibilidade segura quando uma ferramenta READ está desabilitada", async () => {
     const repository = new FakeRepository();
     const disabledCatalog: ToolCatalogEntry[] = pastoralToolCatalog.map(entry => (
       entry.name === "consultar_celulas" ? { ...entry, enabled: false } : entry
     ));
     const agent = new AgentCore(repository, undefined, async () => disabledCatalog);
 
-    await expect(agent.respond({ context, conversationId: 4, message: "Como estão as células desta semana?" })).rejects.toThrow(ToolUnavailableError);
+    const result = await agent.respond({ context, conversationId: 4, message: "Como estão as células desta semana?" });
 
     expect(repository.readTools).toEqual([]);
+    expect(result.content).toContain("temporariamente indisponível");
+    expect(repository.messages).toHaveLength(2);
+    expect(repository.messages.at(-1)).toMatchObject({ role: "assistant", content: expect.stringContaining("temporariamente indisponível") });
     expect(repository.audits).toContainEqual(expect.objectContaining({ action: "agent.tool.execute", status: "denied", tool: "consultar_celulas", result: "tool_disabled", confirmationStatus: "not_required" }));
+    expect(repository.audits).toContainEqual(expect.objectContaining({ action: "agent.respond", status: "success", tool: "consultar_celulas", result: "tool_unavailable_response" }));
   });
 
   it("recusa consulta sensível a papel não autorizado antes de acessar o repositório", async () => {

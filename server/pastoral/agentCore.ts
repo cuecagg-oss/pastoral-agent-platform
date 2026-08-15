@@ -110,6 +110,23 @@ export class AgentCore {
         status: "denied",
         metadata: { reason: error instanceof ToolUnavailableError ? "tool_disabled" : "role_not_allowed" },
       });
+      if (error instanceof ToolUnavailableError) {
+        const content = "Esta consulta está temporariamente indisponível para esta igreja. Tente novamente mais tarde ou fale com um administrador para verificar as ferramentas autorizadas.";
+        await this.repository.appendMessage({ conversationId, context, role: "assistant", content, model: "pastoral-rules-v1", tool });
+        await this.repository.audit({
+          context,
+          action: "agent.respond",
+          agent: AGENT_NAME,
+          tool,
+          provider: "deterministic",
+          model: "pastoral-rules-v1",
+          requestId,
+          result: "tool_unavailable_response",
+          confirmationStatus: "not_required",
+          status: "success",
+        });
+        return { content, provider: "deterministic", model: "pastoral-rules-v1", tool, requestId, confirmationStatus: "not_required" };
+      }
       throw error;
     }
     const model = await (input.modelGenerator ?? this.modelRouter).generate({
