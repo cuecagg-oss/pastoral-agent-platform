@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 type VoiceRecorderProps = {
-  onAudio: (audioBase64: string, mimeType: "audio/webm" | "audio/ogg" | "audio/wav" | "audio/mpeg" | "audio/mp4") => void;
+  onAudio: (audio: Blob, mimeType: "audio/webm" | "audio/ogg" | "audio/wav" | "audio/mpeg" | "audio/mp4") => void | Promise<void>;
   disabled?: boolean;
 };
 
@@ -47,13 +47,7 @@ export function VoiceRecorder({ onAudio, disabled }: VoiceRecorderProps) {
           toast.error("O áudio excede o limite de 16 MB. Grave uma mensagem menor.");
           return;
         }
-        const base64 = await new Promise<string>((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = () => resolve(String(reader.result).split(",")[1] ?? "");
-          reader.onerror = () => reject(reader.error);
-          reader.readAsDataURL(blob);
-        });
-        onAudio(base64, actualMime);
+        await onAudio(blob, actualMime);
       };
       recorder.start();
       setRecording(true);

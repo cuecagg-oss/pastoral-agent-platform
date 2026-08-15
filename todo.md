@@ -23,3 +23,4 @@
 - [x] Testar a seleção do VoiceProvider para configuração padrão e valor inválido, documentando o fallback suportado.
 - [ ] Registrar como pendente a validação manual em dispositivo real dos fluxos de microfone, confirmação de escrita e síntese de voz.
 - [x] Adicionar e validar um estado vazio explícito no dashboard para uma igreja sem registros pastorais.
+- [x] Diagnosticar e corrigir a falha no envio de mensagem de voz reportada em celular, incluindo feedback acionável para permissões, upload e transcrição.

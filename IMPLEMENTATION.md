@@ -19,7 +19,7 @@ As variáveis devem ser cadastradas no painel de segredos, nunca em arquivos ver
 
 ## Voz e limites
 
-O botão de microfone grava no navegador e envia o áudio ao gateway autenticado. `VOICE_PROVIDER=built-in` seleciona a transcrição integrada; valores ainda sem adaptador fazem fallback explícito para `built-in`, e falhas são auditadas sem registrar áudio no log. A leitura em voz alta usa a síntese de fala do navegador, mantendo a resposta textual como fonte canônica da conversa. A disponibilidade de microfone e vozes depende do dispositivo e do navegador.
+O botão de microfone grava no navegador e envia os bytes de áudio por uma rota autenticada específica, em vez de embutir a gravação como Base64 em uma chamada JSON. Isso evita o bloqueio de gateway observado em gravações móveis maiores. `VOICE_PROVIDER=built-in` seleciona a transcrição integrada; valores ainda sem adaptador fazem fallback explícito para `built-in`, e falhas são auditadas sem registrar áudio no log. A leitura em voz alta usa a síntese de fala do navegador, mantendo a resposta textual como fonte canônica da conversa. A disponibilidade de microfone e vozes depende do dispositivo e do navegador.
 
 ## Verificação concluída
 

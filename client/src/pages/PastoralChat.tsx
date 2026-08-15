@@ -39,17 +39,10 @@ export default function PastoralChat() {
     },
     onError: error => toast.error(error.message),
   });
-  const transcribeMutation = trpc.pastoral.transcribe.useMutation({
-    onSuccess: result => {
-      if (!conversationId) return;
-      toast.success("Áudio transcrito. Enviando ao assistente.");
-      sendMutation.mutate({ conversationId, content: result.text });
-    },
-    onError: error => toast.error(error.message),
-  });
+  const [isUploadingVoice, setIsUploadingVoice] = useState(false);
 
   const messages = useMemo<Message[]>(() => (messagesQuery.data ?? []).map(message => ({ role: message.role, content: message.content })), [messagesQuery.data]);
-  const isBusy = sendMutation.isPending || confirmMutation.isPending || transcribeMutation.isPending;
+  const isBusy = sendMutation.isPending || confirmMutation.isPending || isUploadingVoice;
   const latestAnswer = [...messages].reverse().find(message => message.role === "assistant")?.content;
 
   useEffect(() => {
@@ -59,6 +52,22 @@ export default function PastoralChat() {
   const sendMessage = (content: string) => {
     if (!conversationId) return;
     sendMutation.mutate({ conversationId, content });
+  };
+
+  const transcribeAudio = async (audio: Blob, mimeType: string) => {
+    if (!conversationId) return;
+    setIsUploadingVoice(true);
+    try {
+      const response = await fetch("/api/pastoral/voice", { method: "POST", credentials: "include", headers: { "content-type": mimeType }, body: audio });
+      const payload = await response.json().catch(() => ({})) as { text?: string; error?: string };
+      if (!response.ok || !payload.text) throw new Error(payload.error || "Não foi possível enviar o áudio.");
+      toast.success("Áudio transcrito. Enviando ao assistente.");
+      sendMutation.mutate({ conversationId, content: payload.text });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Não foi possível enviar o áudio. Tente novamente.");
+    } finally {
+      setIsUploadingVoice(false);
+    }
   };
 
   const speakLatest = () => {
@@ -107,7 +116,7 @@ export default function PastoralChat() {
             <div className="absolute bottom-4 left-4 z-10">
               <VoiceRecorder
                 disabled={!conversationId || isBusy}
-                onAudio={(audioBase64, mimeType) => transcribeMutation.mutate({ audioBase64, mimeType })}
+                onAudio={transcribeAudio}
               />
             </div>
           </div>

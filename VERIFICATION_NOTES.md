@@ -15,3 +15,9 @@ As capturas móveis em 375 px confirmaram cabeçalho compacto, hero, CTA, estado
 O teste de isolamento agora cria um contexto autenticado da Igreja Demonstração B, comprova que seu dashboard é distinto e confirma que a tentativa de ler a conversa do tenant A retorna `FORBIDDEN`. Também foram adicionados estados recuperáveis de erro no dashboard e no chat, além de fallback explícito do VoiceProvider para a transcrição integrada.
 
 Permanece necessário testar em um dispositivo físico a permissão de microfone, uma transcrição real, a confirmação de um acompanhamento e a síntese de voz do navegador; essa limitação é do hardware/sessão do usuário e não foi simulada como prova de funcionamento.
+
+## Correção do envio de voz
+
+O incidente reportado foi localizado antes da transcrição: a gravação era convertida em Base64 e enviada dentro de uma mutation tRPC/JSON. O registro de rede mostrou que esse request foi recusado com HTTP 403 pelo gateway, portanto o Agent Core e o provedor de voz não chegaram a processar o áudio.
+
+O cliente agora envia os bytes do `Blob` para `/api/pastoral/voice` com `Content-Type` de áudio, e a rota autenticada monta o contexto do tenant, armazena o arquivo, chama a transcrição e audita o resultado. A rota foi verificada sem sessão, retornando 401; a checagem de tipos e 16 testes automatizados foram concluídos com êxito. Resta apenas a confirmação prática com uma sessão autenticada em dispositivo móvel.
