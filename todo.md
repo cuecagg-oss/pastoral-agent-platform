@@ -200,7 +200,7 @@
 - [x] Validação operacional real — Diagnosticar e corrigir a discrepância entre o kill switch publicado e a decisão THÁNOS observada na auditoria, antes de alegar rollback real.
 - [x] Validação operacional real — Confirmar a configuração restaurada pelo parser de IDs, sem solicitar nova alteração de secrets ou audiência.
 
-- [ ] Validação operacional THÁNOS v2 — Corrigir e confirmar o catálogo READ completo no tenant da sessão autenticada.
-- [ ] Validação operacional THÁNOS v2 — Publicar configuração temporária limitada e comprovar as três etapas READ com sucesso real.
-- [ ] Validação operacional THÁNOS v2 — Restaurar configuração segura e confirmar rollback publicado com `pilot_disabled` e `toolCount=0`.
-- [ ] Validação operacional THÁNOS v2 — Executar regressão, tipos, build, auditoria de diff e sincronização final sem force push.
+- [x] Validação operacional THÁNOS v2 — Corrigir e confirmar o catálogo READ completo no tenant da sessão autenticada.
+- [x] Validação operacional THÁNOS v2 — Publicar configuração temporária limitada e comprovar as três etapas READ com sucesso real.
+- [x] Validação operacional THÁNOS v2 — Restaurar configuração segura e confirmar rollback publicado com `pilot_disabled` e `toolCount=0`.
+- [x] Validação operacional THÁNOS v2 — Executar regressão, tipos, build, auditoria de diff e sincronização final sem force push.
