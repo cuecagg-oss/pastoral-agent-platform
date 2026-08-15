@@ -148,7 +148,20 @@ export class DatabasePastoralRepository implements PastoralRepository {
     return { created: true, visitorName: visitor[0].name };
   }
 
-  async audit(input: { context: TenantContext; action: string; agent: string; model?: string; tool?: string; status: "success" | "failure" | "denied"; metadata?: Record<string, unknown> }) {
-    await (await this.db()).insert(auditLogs).values({ organizationId: input.context.organizationId, userId: input.context.userId, action: input.action, agent: input.agent, model: input.model ?? null, tool: input.tool ?? null, status: input.status, metadata: input.metadata ?? null });
+  async audit(input: { context: TenantContext; action: string; agent: string; model?: string; provider?: string; tool?: string; requestId?: string; result?: string; confirmationStatus?: "not_required" | "pending" | "confirmed" | "duplicate" | "denied" | "failed"; status: "success" | "failure" | "denied"; metadata?: Record<string, unknown> }) {
+    await (await this.db()).insert(auditLogs).values({
+      organizationId: input.context.organizationId,
+      userId: input.context.userId,
+      action: input.action,
+      agent: input.agent,
+      model: input.model ?? null,
+      provider: input.provider ?? null,
+      tool: input.tool ?? null,
+      requestId: input.requestId ?? null,
+      result: input.result ?? null,
+      confirmationStatus: input.confirmationStatus ?? null,
+      status: input.status,
+      metadata: input.metadata ?? null,
+    });
   }
 }

@@ -37,6 +37,8 @@ export type ToolCatalogEntry = {
   description: string;
 };
 
+export type ConfirmationStatus = "not_required" | "pending" | "confirmed" | "duplicate" | "denied" | "failed";
+
 export type ToolResult = {
   tool: ReadPastoralToolName;
   summary: string;
@@ -76,7 +78,11 @@ export interface PastoralRepository {
     action: string;
     agent: string;
     model?: string;
+    provider?: string;
     tool?: string;
+    requestId?: string;
+    result?: string;
+    confirmationStatus?: ConfirmationStatus;
     status: "success" | "failure" | "denied";
     metadata?: Record<string, unknown>;
   }): Promise<void>;
@@ -88,6 +94,7 @@ export type AgentResponse = {
   provider: string;
   tool?: string;
   requestId?: string;
+  confirmationStatus?: ConfirmationStatus;
   gateway?: {
     version: "v1";
     provider: "legacy" | "hermes";

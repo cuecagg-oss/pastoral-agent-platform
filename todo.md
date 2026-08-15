@@ -100,7 +100,11 @@
 - [x] Expor o catálogo sanitizado por procedimento autenticado, sem lógica de execução, chaves, URLs ou possibilidade de criar ferramentas arbitrárias.
 - [x] Cobrir em testes a autorização, a recusa de ferramenta desabilitada, a sanitização do catálogo e o isolamento multi-tenant do fluxo real.
 - [x] Validar a terceira fase com testes, build de produção, reinício do serviço de desenvolvimento e sincronização do repositório público.
-- [ ] Evoluir confirmações idempotentes e auditoria com requestId, tool, provedor/modelo, resultado e status de confirmação.
+- [x] Evoluir confirmações idempotentes e auditoria com requestId, tool, provedor/modelo, resultado e status de confirmação.
+- [x] Persistir campos consultáveis de requestId, provedor, resultado e estado de confirmação em todos os eventos de auditoria do agente.
+- [x] Propagar um requestId estável pelos fluxos de resposta, prévia e confirmação, preservando a chave de idempotência distinta da requisição.
+- [x] Registrar de forma estruturada os resultados de sucesso, duplicidade, falha, ferramenta desabilitada e autorização negada sem expor conteúdo sensível.
+- [x] Cobrir a auditoria enriquecida, a idempotência e o isolamento por tenant com testes unitários e de integração.
 - [ ] Preparar Hermes com estado sanitizado, circuit breaker, retries controlados e fallback local.
 - [ ] Preparar conector n8n desativado por padrão, com allowlist e sem URLs arbitrárias.
 - [ ] Criar serviço do Dashboard para métricas, tendências, pendências e insights estritamente isolados por tenant e papel.

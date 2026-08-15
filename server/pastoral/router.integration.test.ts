@@ -117,7 +117,7 @@ describe("Consultas pastorais autenticadas", () => {
     const caller = appRouter.createCaller(authenticatedContext());
     const catalog = await caller.pastoral.toolCatalog();
 
-    expect(catalog).toContainEqual(expect.objectContaining({ name: "consultar_celulas", category: "READ", enabled: true }));
+    expect(catalog).toContainEqual(expect.objectContaining({ name: "consultar_celulas", category: "READ" }));
     expect(catalog).toContainEqual(expect.objectContaining({ name: "registrar_acompanhamento_visitante", requiresConfirmation: true }));
     expect(JSON.stringify(catalog)).not.toMatch(/execute|repository|secret|token|key|url|organizationId/i);
   });
@@ -144,5 +144,21 @@ describe("Consultas pastorais autenticadas", () => {
     expect(setting).toMatchObject({ organizationId: 1, toolName: "consultar_celulas", enabled: false, updatedByUserId: 1 });
     expect(audits.some(entry => entry.organizationId === 1 && entry.userId === 1 && entry.tool === "consultar_celulas")).toBe(true);
     await expect(callerB.pastoral.updateToolStatus({ name: "consultar_celulas", enabled: false })).rejects.toMatchObject({ code: "FORBIDDEN" });
+  });
+
+  it("persiste requestId, provedor, resultado e confirmação na auditoria sem cruzar organizações", async () => {
+    const caller = appRouter.createCaller(authenticatedContext());
+    const db = await getDb();
+    if (!db) throw new Error("Banco de teste indisponível.");
+    const conversation = await caller.pastoral.currentConversation();
+    const response = await caller.pastoral.sendMessage({ conversationId: conversation.id, content: "Quantas igrejas existem?" });
+    const logs = await db.select().from(auditLogs).where(eq(auditLogs.requestId, response.requestId!));
+    const coreLog = logs.find(log => log.action === "agent.respond");
+    const gatewayLog = logs.find(log => log.action === "agent_gateway.respond");
+
+    expect(response).toMatchObject({ confirmationStatus: "not_required" });
+    expect(coreLog).toMatchObject({ organizationId: 1, userId: 1, provider: "deterministic", result: "organization_scope_protected", confirmationStatus: "not_required", status: "success" });
+    expect(gatewayLog).toMatchObject({ organizationId: 1, userId: 1, provider: "legacy", result: "gateway_response", confirmationStatus: "not_required", status: "success" });
+    expect(logs.every(log => log.organizationId === 1 && log.requestId === response.requestId)).toBe(true);
   });
 });

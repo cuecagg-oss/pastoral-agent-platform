@@ -8,7 +8,7 @@ import { createVoiceHistoryEntry, VOICE_HISTORY_LABEL } from "./voiceUploadRoute
 const context: TenantContext = { organizationId: 1, organizationName: "Igreja Demonstração A", userId: 1, userName: "Pastor Samuel", role: "pastor" };
 
 class FakeRepository implements PastoralRepository {
-  audits: Array<{ action: string; status: string; tool?: string }> = [];
+  audits: Array<{ action: string; status: string; tool?: string; provider?: string; model?: string; requestId?: string; result?: string; confirmationStatus?: string }> = [];
   messages: Array<{ role: string; content: string; messageType?: string }> = [];
   readTools: string[] = [];
   followups = 0;
@@ -23,17 +23,18 @@ class FakeRepository implements PastoralRepository {
   findVisitor(_context: TenantContext, name: string) { return Promise.resolve(name === "João" ? { id: 21, name: "João", followedUp: false } : null); }
   appendMessage(input: { role: "user" | "assistant"; content: string; messageType?: "text" | "voice" }) { this.messages.push(input); return Promise.resolve(); }
   writeFollowup() { this.followups += 1; return Promise.resolve({ created: this.followups === 1, visitorName: "João" }); }
-  audit(input: { action: string; status: "success" | "failure" | "denied"; tool?: string }) { this.audits.push(input); return Promise.resolve(); }
+  audit(input: { action: string; status: "success" | "failure" | "denied"; tool?: string; provider?: string; model?: string; requestId?: string; result?: string; confirmationStatus?: "not_required" | "pending" | "confirmed" | "duplicate" | "denied" | "failed" }) { this.audits.push(input); return Promise.resolve(); }
 }
 
 describe("Agent Core pastoral", () => {
   it("responde por ferramenta autorizada e audita sem expor raciocínio", async () => {
     const repository = new FakeRepository();
     const agent = new AgentCore(repository);
-    const result = await agent.respond({ context, conversationId: 4, message: "Quais células realizaram reunião esta semana?" });
+    const result = await agent.respond({ context, conversationId: 4, message: "Quais células realizaram reunião esta semana?", requestId: "request-read" });
     expect(result.tool).toBe("consultar_presenca");
     expect(result.content).toContain("Resumo autorizado");
-    expect(repository.audits).toContainEqual(expect.objectContaining({ action: "agent.respond", status: "success", tool: "consultar_presenca" }));
+    expect(result).toMatchObject({ requestId: "request-read", confirmationStatus: "not_required" });
+    expect(repository.audits).toContainEqual(expect.objectContaining({ action: "agent.respond", status: "success", tool: "consultar_presenca", provider: "deterministic", requestId: "request-read", result: "response_generated", confirmationStatus: "not_required" }));
     expect(repository.messages).toHaveLength(2);
   });
 
@@ -83,13 +84,19 @@ describe("Agent Core pastoral", () => {
   it("exige confirmação e mantém idempotência da Write Tool", async () => {
     const repository = new FakeRepository();
     const agent = new AgentCore(repository);
-    const prepared = await agent.respond({ context, conversationId: 4, message: "Registre que o pastor entrou em contato com João hoje." });
+    const prepared = await agent.respond({ context, conversationId: 4, message: "Registre que o pastor entrou em contato com João hoje.", requestId: "request-prepare" });
     expect(prepared.confirmation?.visitorName).toBe("João");
+    expect(prepared).toMatchObject({ requestId: "request-prepare", confirmationStatus: "pending" });
     expect(repository.followups).toBe(0);
-    const first = await agent.confirmFollowup({ context, conversationId: 4, ...prepared.confirmation! });
-    const second = await agent.confirmFollowup({ context, conversationId: 4, ...prepared.confirmation! });
+    const first = await agent.confirmFollowup({ context, conversationId: 4, ...prepared.confirmation!, requestId: "request-confirm" });
+    const second = await agent.confirmFollowup({ context, conversationId: 4, ...prepared.confirmation!, requestId: "request-confirm-retry" });
     expect(first.content).toContain("registrado com sucesso");
     expect(second.content).toContain("já havia sido registrado");
+    expect(first).toMatchObject({ requestId: "request-confirm", confirmationStatus: "confirmed" });
+    expect(second).toMatchObject({ requestId: "request-confirm-retry", confirmationStatus: "duplicate" });
+    expect(repository.audits).toContainEqual(expect.objectContaining({ action: "followup.prepare", requestId: "request-prepare", result: "confirmation_prepared", confirmationStatus: "pending" }));
+    expect(repository.audits).toContainEqual(expect.objectContaining({ action: "followup.confirm", requestId: "request-confirm", result: "followup_registered", confirmationStatus: "confirmed" }));
+    expect(repository.audits).toContainEqual(expect.objectContaining({ action: "followup.confirm", requestId: "request-confirm-retry", result: "followup_duplicate", confirmationStatus: "duplicate" }));
     expect(repository.followups).toBe(2);
   });
 
@@ -97,7 +104,7 @@ describe("Agent Core pastoral", () => {
     const repository = new FakeRepository();
     const agent = new AgentCore(repository);
     await expect(agent.respond({ context: { ...context, role: "leader" }, conversationId: 4, message: "Registre que o pastor entrou em contato com João hoje." })).rejects.toThrow(AuthorizationError);
-    expect(repository.audits).toContainEqual(expect.objectContaining({ action: "followup.prepare", status: "denied" }));
+    expect(repository.audits).toContainEqual(expect.objectContaining({ action: "followup.prepare", status: "denied", result: "role_not_authorized", confirmationStatus: "denied" }));
   });
 
   it("recusa ferramenta desabilitada antes de consultar dados e audita a decisão", async () => {
@@ -110,7 +117,7 @@ describe("Agent Core pastoral", () => {
     await expect(agent.respond({ context, conversationId: 4, message: "Como estão as células desta semana?" })).rejects.toThrow(ToolUnavailableError);
 
     expect(repository.readTools).toEqual([]);
-    expect(repository.audits).toContainEqual(expect.objectContaining({ action: "agent.tool.execute", status: "denied", tool: "consultar_celulas" }));
+    expect(repository.audits).toContainEqual(expect.objectContaining({ action: "agent.tool.execute", status: "denied", tool: "consultar_celulas", result: "tool_disabled", confirmationStatus: "not_required" }));
   });
 
   it("recusa consulta sensível a papel não autorizado antes de acessar o repositório", async () => {

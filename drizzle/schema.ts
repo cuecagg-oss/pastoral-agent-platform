@@ -208,12 +208,19 @@ export const auditLogs = mysqlTable(
     action: varchar("action", { length: 120 }).notNull(),
     agent: varchar("agent", { length: 120 }).notNull(),
     model: varchar("model", { length: 120 }),
+    provider: varchar("provider", { length: 80 }),
     tool: varchar("tool", { length: 120 }),
+    requestId: varchar("requestId", { length: 80 }),
+    result: varchar("result", { length: 120 }),
+    confirmationStatus: mysqlEnum("confirmationStatus", ["not_required", "pending", "confirmed", "duplicate", "denied", "failed"]),
     status: mysqlEnum("status", ["success", "failure", "denied"]).notNull(),
     metadata: json("metadata"),
     createdAt: timestamp("createdAt").defaultNow().notNull(),
   },
-  table => [index("audit_organization_created_idx").on(table.organizationId, table.createdAt)],
+  table => [
+    index("audit_organization_created_idx").on(table.organizationId, table.createdAt),
+    index("audit_organization_request_idx").on(table.organizationId, table.requestId),
+  ],
 );
 
 export type User = typeof users.$inferSelect;

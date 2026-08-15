@@ -26,14 +26,18 @@ export class AgentGateway {
     const config = await this.config(input.context);
     const fallback = !config.enabled || config.provider === "hermes";
     const fallbackReason = !config.enabled ? "gateway_disabled" : "hermes_unavailable";
-    const response = await this.legacyAgent.respond(input);
+    const response = await this.legacyAgent.respond({ ...input, requestId });
 
     await this.repository.audit({
       context: input.context,
       action: "agent_gateway.respond",
       agent: GATEWAY_NAME,
       model: response.model,
+      provider: config.provider,
       tool: response.tool,
+      requestId,
+      result: "gateway_response",
+      confirmationStatus: response.confirmationStatus ?? "not_required",
       status: "success",
       metadata: {
         requestId,
@@ -54,13 +58,17 @@ export class AgentGateway {
 
   async confirmFollowup(input: { context: TenantContext; conversationId: number; visitorId: number; note: string; idempotencyKey: string; requestId?: string }) {
     const requestId = input.requestId ?? randomUUID();
-    const response = await this.legacyAgent.confirmFollowup(input);
+    const response = await this.legacyAgent.confirmFollowup({ ...input, requestId });
     await this.repository.audit({
       context: input.context,
       action: "agent_gateway.confirm",
       agent: GATEWAY_NAME,
       model: response.model,
+      provider: "legacy",
       tool: response.tool,
+      requestId,
+      result: "gateway_confirmation",
+      confirmationStatus: response.confirmationStatus ?? "confirmed",
       status: "success",
       metadata: { requestId, fallback: true, version: "v1" },
     });
