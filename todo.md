@@ -105,8 +105,16 @@
 - [x] Propagar um requestId estável pelos fluxos de resposta, prévia e confirmação, preservando a chave de idempotência distinta da requisição.
 - [x] Registrar de forma estruturada os resultados de sucesso, duplicidade, falha, ferramenta desabilitada e autorização negada sem expor conteúdo sensível.
 - [x] Cobrir a auditoria enriquecida, a idempotência e o isolamento por tenant com testes unitários e de integração.
-- [ ] Preparar Hermes com estado sanitizado, circuit breaker, retries controlados e fallback local.
-- [ ] Preparar conector n8n desativado por padrão, com allowlist e sem URLs arbitrárias.
+- [x] Preparar Hermes com estado sanitizado, circuit breaker, retries controlados e fallback local.
+- [x] Criar cliente Hermes opt-in e desativado por padrão, com timeout limitado, retries controlados, circuito por processo e fallback obrigatório ao Agent Core.
+- [x] Expor estado sanitizado do Hermes com habilitação, configuração, conectividade, modelo, latência e última falha sem endpoint, chave ou detalhes internos.
+- [x] Auditar cada tentativa Hermes com requestId e motivo de fallback, sem registrar prompts, respostas completas ou segredos.
+- [x] Preparar conector n8n desativado por padrão, com allowlist e sem URLs arbitrárias.
+- [x] Criar contrato n8n desativado por padrão, com identificação de workflow em allowlist e sem aceitar URLs, webhooks ou cargas arbitrárias.
+- [x] Cobrir circuit breaker, retries, fallback, sanitização Hermes e bloqueio n8n em testes unitários e de integração.
+- [x] Integrar Hermes ao fluxo de resposta como provedor opt-in com contrato estruturado validado e fallback ao Agent Core somente em indisponibilidade, timeout ou circuito aberto.
+- [x] Auditar cada tentativa de retry Hermes com requestId correlacionado, número da tentativa e falha sanitizada.
+- [x] Adicionar testes de integração tRPC para status e teste Hermes, incluindo autorização administrativa, sanitização e estado n8n.
 - [ ] Criar serviço do Dashboard para métricas, tendências, pendências e insights estritamente isolados por tenant e papel.
 - [ ] Evoluir o Dashboard preservando a visão gerencial e acrescentando camada inteligente com estados de fallback.
 - [ ] Criar área administrativa de Configurações por papel para organização, usuários, IA, Hermes, voz, ferramentas, integrações e auditoria.

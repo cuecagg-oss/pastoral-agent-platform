@@ -5,7 +5,8 @@ import { systemRouter } from "./_core/systemRouter";
 import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import { AgentCore } from "./pastoral/agentCore";
 import { AgentGateway } from "./pastoral/agentGateway";
-import { getAgentGatewayStatus } from "./pastoral/gatewayConfig";
+import { getN8nConnectorStatus } from "./pastoral/n8nConnector";
+import { assertAdministrativePermission } from "./pastoral/policy";
 import { getTenantGatewayConfig, toSanitizedTenantGatewayStatus, updateTenantGatewayConfig } from "./pastoral/tenantGatewayConfig";
 import { listSanitizedToolCatalog } from "./pastoral/toolCatalog";
 import { getTenantToolCatalog, updateTenantToolStatus } from "./pastoral/tenantToolConfig";
@@ -41,7 +42,7 @@ export const appRouter = router({
     }),
     agentSettings: protectedProcedure.query(async ({ ctx }) => {
       const tenant = await currentTenant(ctx.user.id);
-      return toSanitizedTenantGatewayStatus(await getTenantGatewayConfig(tenant));
+      return agentGateway.getStatus(tenant);
     }),
     toolCatalog: protectedProcedure.query(async ({ ctx }) => {
       const tenant = await currentTenant(ctx.user.id);
@@ -97,6 +98,16 @@ export const appRouter = router({
     confirmFollowup: protectedProcedure.input(z.object({ conversationId: z.number().int().positive(), visitorId: z.number().int().positive(), note: z.string().min(1).max(2000), idempotencyKey: z.string().uuid() })).mutation(async ({ ctx, input }) => {
       const tenant = await currentTenant(ctx.user.id);
       return agentGateway.confirmFollowup({ context: tenant, ...input });
+    }),
+    integrationStatus: protectedProcedure.query(async ({ ctx }) => {
+      const tenant = await currentTenant(ctx.user.id);
+      assertAdministrativePermission(tenant);
+      return { hermes: await agentGateway.getStatus(tenant), n8n: getN8nConnectorStatus() };
+    }),
+    testHermes: protectedProcedure.mutation(async ({ ctx }) => {
+      const tenant = await currentTenant(ctx.user.id);
+      assertAdministrativePermission(tenant);
+      return agentGateway.testHermesConnection(tenant);
     }),
   }),
 });

@@ -1,4 +1,4 @@
-export type ModelProvider = "openai" | "anthropic" | "gemini" | "openrouter" | "deterministic";
+export type ModelProvider = "openai" | "anthropic" | "gemini" | "openrouter" | "hermes" | "deterministic";
 
 export type ModelGenerationInput = {
   system: string;

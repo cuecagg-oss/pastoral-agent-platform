@@ -122,6 +122,28 @@ describe("Consultas pastorais autenticadas", () => {
     expect(JSON.stringify(catalog)).not.toMatch(/execute|repository|secret|token|key|url|organizationId/i);
   });
 
+  it("protege o status de integrações e audita o teste Hermes sem revelar segredos", async () => {
+    const db = await getDb();
+    if (!db) throw new Error("Banco de teste indisponível.");
+    await db.update(organizationMemberships).set({ role: "admin" }).where(eq(organizationMemberships.userId, 1));
+    const adminCaller = appRouter.createCaller(authenticatedContext());
+    const demoPastorB = (await db.select().from(users).where(eq(users.openId, "demo-pastor-b")).limit(1))[0];
+    if (!demoPastorB) throw new Error("Usuário do tenant B não foi semeado.");
+    const callerB = appRouter.createCaller({
+      ...authenticatedContext(),
+      user: { ...authenticatedContext().user!, id: demoPastorB.id, openId: demoPastorB.openId, name: demoPastorB.name, role: "user" },
+    });
+
+    const status = await adminCaller.pastoral.integrationStatus();
+    const probe = await adminCaller.pastoral.testHermes();
+
+    expect(status).toMatchObject({ n8n: { enabled: false, status: "disabled", allowedWorkflows: [] }, hermes: { hermes: { connection: expect.any(String) } } });
+    expect(probe).toMatchObject({ connection: expect.any(String), attempts: expect.any(Number) });
+    expect(JSON.stringify({ status, probe })).not.toMatch(/api.?key|base.?url|token|secret/i);
+    await expect(callerB.pastoral.integrationStatus()).rejects.toMatchObject({ code: "FORBIDDEN" });
+    await expect(callerB.pastoral.testHermes()).rejects.toMatchObject({ code: "FORBIDDEN" });
+  });
+
   it("persiste a habilitação somente para a organização do administrador e bloqueia mudanças por papéis não administrativos", async () => {
     const db = await getDb();
     if (!db) throw new Error("Banco de teste indisponível.");

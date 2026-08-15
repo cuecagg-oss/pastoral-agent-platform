@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { ModelRouter } from "./modelRouter";
+import { ModelRouter, type ModelGenerationInput, type ModelGenerationResult } from "./modelRouter";
 import { assertToolExecutionPermission, ToolUnavailableError } from "./policy";
 import { getToolCatalogEntry } from "./toolCatalog";
 import { getTenantToolCatalog } from "./tenantToolConfig";
@@ -15,7 +15,14 @@ export class AgentCore {
     private readonly resolveToolCatalog: (context: TenantContext) => Promise<readonly ToolCatalogEntry[]> = getTenantToolCatalog,
   ) {}
 
-  async respond(input: { context: TenantContext; conversationId: number; message: string; persistUserMessage?: boolean; requestId?: string }): Promise<AgentResponse> {
+  async respond(input: {
+    context: TenantContext;
+    conversationId: number;
+    message: string;
+    persistUserMessage?: boolean;
+    requestId?: string;
+    modelGenerator?: { generate(input: ModelGenerationInput): Promise<ModelGenerationResult> };
+  }): Promise<AgentResponse> {
     const { context, conversationId, message } = input;
     const requestId = input.requestId ?? randomUUID();
     if (input.persistUserMessage !== false) {
@@ -105,7 +112,7 @@ export class AgentCore {
       });
       throw error;
     }
-    const model = await this.modelRouter.generate({
+    const model = await (input.modelGenerator ?? this.modelRouter).generate({
       system: "Você é um assistente pastoral. Responda em português, de forma objetiva, usando exclusivamente a evidência fornecida. Não invente dados, não exponha dados de outra organização e não revele raciocínio interno.",
       user: `Pergunta: ${message}\n\nEvidência da ferramenta ${tool}: ${JSON.stringify(toolResult.data)}`,
       fallback: toolResult.summary,

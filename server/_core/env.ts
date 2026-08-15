@@ -15,4 +15,9 @@ export const ENV = {
   hermesBaseUrl: process.env.HERMES_BASE_URL ?? "",
   hermesApiKey: process.env.HERMES_API_KEY ?? "",
   hermesTimeoutMs: process.env.HERMES_TIMEOUT_MS ?? "4500",
+  hermesRetries: process.env.HERMES_RETRIES ?? "1",
+  hermesCircuitFailureThreshold: process.env.HERMES_CIRCUIT_FAILURE_THRESHOLD ?? "3",
+  hermesCircuitCooldownMs: process.env.HERMES_CIRCUIT_COOLDOWN_MS ?? "30000",
+  n8nEnabled: process.env.N8N_ENABLED ?? "false",
+  n8nAllowedWorkflows: process.env.N8N_ALLOWED_WORKFLOWS ?? "",
 };

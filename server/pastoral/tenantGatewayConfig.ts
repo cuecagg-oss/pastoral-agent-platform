@@ -2,6 +2,7 @@ import { eq } from "drizzle-orm";
 import { organizationAgentSettings } from "../../drizzle/schema";
 import { getDb } from "../db";
 import { getAgentGatewayRuntimeConfig, type AgentGatewayRuntimeConfig } from "./gatewayConfig";
+import type { HermesSanitizedStatus } from "./hermesClient";
 import { assertAdministrativePermission } from "./policy";
 import type { TenantContext } from "./types";
 
@@ -70,18 +71,22 @@ export async function updateTenantGatewayConfig(context: TenantContext, input: T
   return getTenantGatewayConfig(context);
 }
 
-export function toSanitizedTenantGatewayStatus(config: TenantGatewayConfig) {
+export function toSanitizedTenantGatewayStatus(config: TenantGatewayConfig, hermesStatus?: HermesSanitizedStatus) {
   return {
     status: config.enabled ? "online" : "disabled",
     provider: config.provider,
     model: config.model,
     fallbackPolicy: config.fallbackPolicy,
     source: config.source,
-    hermes: {
+    hermes: hermesStatus ?? {
       enabled: config.hermes.enabled,
       configured: config.hermes.configured,
+      connection: config.hermes.enabled ? (config.hermes.configured ? "unknown" : "unconfigured") : "disabled",
       model: config.hermes.model,
       timeoutMs: config.hermes.timeoutMs,
+      retries: config.hermes.retries,
+      latencyMs: null,
+      lastFailure: config.hermes.enabled && !config.hermes.configured ? "unconfigured" : null,
     },
   } as const;
 }
