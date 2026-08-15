@@ -204,5 +204,5 @@
 - [x] Validação operacional THÁNOS v2 — Publicar configuração temporária limitada e comprovar as três etapas READ com sucesso real.
 - [x] Validação operacional THÁNOS v2 — Restaurar configuração segura e confirmar rollback publicado com `pilot_disabled` e `toolCount=0`.
 - [x] Validação operacional THÁNOS v2 — Executar regressão, tipos, build, auditoria de diff e sincronização final sem force push.
-- [ ] Bug crítico do chat — Diagnosticar e corrigir mensagens enviadas que não recebem resposta no Assistente Pastoral publicado.
-- [ ] Bug crítico do chat — Cobrir a regressão de envio, resposta, persistência e estado visual, validar em produção e sincronizar a correção.
+- [x] Bug crítico do chat — Diagnosticar e corrigir mensagens enviadas que não recebem resposta no Assistente Pastoral publicado.
+- [x] Bug crítico do chat — Cobrir a regressão de envio, resposta, persistência e estado visual, validar em produção e sincronizar a correção.
