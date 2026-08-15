@@ -5,6 +5,7 @@ import { systemRouter } from "./_core/systemRouter";
 import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import { AgentCore } from "./pastoral/agentCore";
 import { AgentGateway } from "./pastoral/agentGateway";
+import { ThanosPilotRouter } from "./pastoral/thanosPilotRouter";
 import { getAdminSettingsOverview } from "./pastoral/adminSettings";
 import { getN8nConnectorStatus } from "./pastoral/n8nConnector";
 import { assertAdministrativePermission, assertDashboardPermission } from "./pastoral/policy";
@@ -13,10 +14,12 @@ import { listSanitizedToolCatalog } from "./pastoral/toolCatalog";
 import { getTenantToolCatalog, updateTenantToolStatus } from "./pastoral/tenantToolConfig";
 import { pastoralToolNames } from "./pastoral/types";
 import { DatabasePastoralRepository, dashboardSummary, getOrCreateConversation, getTenantContextForUser, listMessages } from "./pastoral/repository";
+import { PastoralThanosFacade } from "./workspaces/pastoral/thanosFacade";
 
 const repository = new DatabasePastoralRepository();
 const agentCore = new AgentCore(repository);
 const agentGateway = new AgentGateway(repository, agentCore);
+const thanosPilotRouter = new ThanosPilotRouter(repository, agentGateway, new PastoralThanosFacade(repository));
 
 async function currentTenant(userId: number) {
   return getTenantContextForUser(userId);
@@ -107,7 +110,7 @@ export const appRouter = router({
     }),
     sendMessage: protectedProcedure.input(z.object({ conversationId: z.number().int().positive(), content: z.string().trim().min(1).max(4000) })).mutation(async ({ ctx, input }) => {
       const tenant = await currentTenant(ctx.user.id);
-      return agentGateway.respond({ context: tenant, conversationId: input.conversationId, message: input.content });
+      return thanosPilotRouter.respond({ context: tenant, conversationId: input.conversationId, message: input.content });
     }),
     confirmFollowup: protectedProcedure.input(z.object({ conversationId: z.number().int().positive(), visitorId: z.number().int().positive(), note: z.string().min(1).max(2000), idempotencyKey: z.string().uuid() })).mutation(async ({ ctx, input }) => {
       const tenant = await currentTenant(ctx.user.id);

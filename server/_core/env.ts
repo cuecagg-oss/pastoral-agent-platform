@@ -20,4 +20,9 @@ export const ENV = {
   hermesCircuitCooldownMs: process.env.HERMES_CIRCUIT_COOLDOWN_MS ?? "30000",
   n8nEnabled: process.env.N8N_ENABLED ?? "false",
   n8nAllowedWorkflows: process.env.N8N_ALLOWED_WORKFLOWS ?? "",
+  thanosPilotEnabled: process.env.THANOS_PILOT_ENABLED ?? "false",
+  thanosPilotKillSwitch: process.env.THANOS_PILOT_KILL_SWITCH ?? "false",
+  thanosPilotOrganizationIds: process.env.THANOS_PILOT_ORGANIZATION_IDS ?? "",
+  thanosPilotUserIds: process.env.THANOS_PILOT_USER_IDS ?? "",
+  thanosPilotVersion: process.env.THANOS_PILOT_VERSION ?? "thanos-read-pilot-v1",
 };

@@ -9,7 +9,8 @@
 5. Hermes resiliente e opt-in, com retries, circuit breaker, fallback local e estado sanitizado; n8n governado e sem execução externa.
 6. Dashboard tradicional normalizado, Camada inteligente determinística somente leitura e Configurações administrativas por papel.
 7. Núcleo THÁNOS com contexto tipado, registros fechados e adaptador do primeiro workspace Pastoral.
-8. Piloto multi-step de leitura com células e presença, evidência composta, auditoria por etapa e fallback determinístico.
+8. Piloto multi-step de leitura com células, presença e relatórios, evidência composta, auditoria por etapa e fallback determinístico.
+9. Roteamento público THÁNOS controlado por flag, kill switch, audiência server-side e intenções READ fechadas, com telemetria sanitizada e retorno legado sem duplicar histórico.
 
 ## Próximas decisões antes de qualquer ativação externa
 
@@ -19,8 +20,8 @@
 | Ativar n8n | Aprovar workflow específico, destino, assinatura, payload, retentativa e responsável operacional. |
 | Ampliar ferramentas de escrita | Revisar categoria, schema, papéis, confirmação, idempotência e cobertura de auditoria. |
 | Insights generativos | Definir política de privacidade, escopo factual, explicabilidade e fallback determinístico. |
-| Ativar THÁNOS na rota pública | Aprovar plano de roteamento, métricas de compatibilidade, telemetria, rollback e caracterização de texto, voz e escrita. |
-| Ampliar o piloto multi-step | Revisar tool allowlist, dependência entre etapas, limites de evidência, auditoria e comportamento de fallback. |
+| Ampliar a audiência THÁNOS | Observar telemetria sanitizada, testar rollback e preservar a ativação explícita por tenant/usuário antes de ampliar o piloto. |
+| Ampliar o piloto multi-step READ | Revisar tool allowlist, dependência entre etapas, limites de evidência, auditoria e comportamento de fallback; novas ferramentas exigem caracterização própria. |
 
 ## Fora do escopo desta versão
 
@@ -31,4 +32,4 @@
 | Hermes obrigatório para atendimento | Contraria o requisito de fallback seguro. |
 | Escritas automáticas por insights | Exigiria confirmação e matriz de risco aprovada. |
 | Exposição de chaves, prompts privados ou transcrições | Incompatível com os limites de segurança e privacidade. |
-| Adoção automática do THÁNOS no chat público | Exige decisão de arquitetura e validação operacional antes de alterar o Gateway existente. |
+| Adoção global ou automática do THÁNOS no chat público | O piloto atual é restrito por audiência e intenção; expansão sem critérios de compatibilidade e rollback ampliaria o risco operacional. |

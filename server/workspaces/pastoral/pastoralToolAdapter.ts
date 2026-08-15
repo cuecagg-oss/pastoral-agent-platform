@@ -1,7 +1,7 @@
 import type { SkillDefinition, ThanosContext } from "../../thanos/contracts";
 import type { ThanosReadTool } from "../../thanos/orchestrator";
 import { chooseReadTool, executeReadTool } from "../../pastoral/toolRegistry";
-import type { PastoralRepository, PastoralToolName, TenantContext, ToolCatalogEntry } from "../../pastoral/types";
+import type { PastoralRepository, PastoralToolName, ReadPastoralToolName, TenantContext, ToolCatalogEntry } from "../../pastoral/types";
 
 export class PastoralSkillPolicyError extends Error {
   constructor(message: string) {
@@ -58,16 +58,15 @@ export function createPastoralDeclaredReadToolAdapter(input: Readonly<{
   });
 }
 
-/** Sequência fixa do piloto: duas consultas READ independentes com o mesmo tenant autenticado. */
+/** Plano fechado do piloto: duas ou três consultas READ com o mesmo tenant autenticado. */
 export function createPastoralMultiStepReadAdapters(input: Readonly<{
   repository: PastoralRepository;
   tenantContext: TenantContext;
   thanosContext: ThanosContext;
   skill: SkillDefinition;
   toolCatalog: readonly ToolCatalogEntry[];
+  tools?: readonly ReadPastoralToolName[];
 }>): readonly ThanosReadTool[] {
-  return Object.freeze([
-    createPastoralDeclaredReadToolAdapter({ ...input, tool: "consultar_celulas" }),
-    createPastoralDeclaredReadToolAdapter({ ...input, tool: "consultar_presenca" }),
-  ]);
+  const tools = input.tools ?? ["consultar_celulas", "consultar_presenca"];
+  return Object.freeze(tools.map(tool => createPastoralDeclaredReadToolAdapter({ ...input, tool })));
 }

@@ -177,3 +177,10 @@
 - [x] Fase F — Atualizar baseline, decisões, roadmap, backlog, implementação e notas de verificação para o ciclo THÁNOS concluído.
 - [x] Fase F — Executar validação final de tipos, regressão, build, auditoria de dependências e auditoria de código sem stubs ou alterações inesperadas.
 - [x] Fase F — Verificar o ambiente após reinício, preservar a interface existente e registrar limites explícitos do piloto multi-step.
+- [x] Ciclo THÁNOS Adoção — Caracterizar a rota pública, contratos de histórico, consultas e diferenças esperadas entre Gateway legado e THÁNOS.
+- [x] Ciclo THÁNOS Adoção — Criar configuração server-side segura para elegibilidade por feature flag, tenant/usuário piloto, versão e kill switch.
+- [x] Ciclo THÁNOS Adoção — Integrar o roteamento seletivo READ no chat preservando `conversationId`, `requestId`, mensagem única, tenant e fallback legado.
+- [x] Ciclo THÁNOS Adoção — Registrar telemetria sanitizada por rota, intenção, ferramentas, etapas, duração, resultado, fallback e rollback.
+- [x] Ciclo THÁNOS Adoção — Ampliar o piloto multi-step com `consultar_relatorios` somente se a evidência, capability e isolamento forem comprovados.
+- [x] Ciclo THÁNOS Adoção — Cobrir elegibilidade, kill switch, fallback, telemetria, rollback, ausência de duplicação e isolamento em testes automatizados.
+- [x] Ciclo THÁNOS Adoção — Executar tipos, regressão, build, auditoria, demonstração, documentação, checkpoint e sincronização GitHub.

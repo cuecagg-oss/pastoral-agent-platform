@@ -101,6 +101,13 @@ export type AgentResponse = {
     fallback: boolean;
     fallbackReason?: "gateway_disabled" | "hermes_unavailable" | "hermes_circuit_open" | "hermes_pilot_local" | "local_confirmation";
   };
+  thanos?: {
+    version: string;
+    mode: "single_read" | "multi_read";
+    tools: readonly string[];
+    fallback: boolean;
+    fallbackReason?: "thanos_error";
+  };
   confirmation?: {
     visitorId: number;
     visitorName: string;

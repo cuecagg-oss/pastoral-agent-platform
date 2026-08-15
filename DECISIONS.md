@@ -17,7 +17,8 @@
 | ADR-013 | Modelar `workspaceKey`, `tenantId` e `domain` como identificadores contextuais separados no núcleo THÁNOS. | Aprovada | Um workspace não pode ser confundido com a organização autenticada nem com o domínio de negócio. |
 | ADR-014 | Resolver workspaces e skills por registros fechados e adaptar as ferramentas no limite do workspace. | Aprovada | O núcleo não importa o domínio Pastoral e o catálogo/política existentes continuam a ser a fonte de autorização. |
 | ADR-015 | Restringir o piloto multi-step a duas ou três leituras declaradas, com auditoria por etapa e fallback determinístico. | Aprovada | O piloto não habilita escrita, ferramenta arbitrária, falha bruta ou troca de tenant entre etapas. |
-| ADR-016 | Manter o piloto THÁNOS fora da rota pública até a aprovação formal de adoção do Gateway. | Aprovada | O chat ativo preserva o AgentGateway/AgentCore e o novo núcleo pode evoluir com rollback de baixo risco. |
+| ADR-016 | Manter o piloto THÁNOS fora da rota pública até a aprovação formal de adoção do Gateway. | Substituída por ADR-017 | A caracterização, testes e rollback controlado foram concluídos antes da ativação seletiva. |
+| ADR-017 | Adotar THÁNOS no chat público somente por elegibilidade server-side READ, audiência explícita e kill switch. | Aprovada | A rota ativa permanece legada por padrão; só consultas fechadas de células, presença e relatórios podem seguir ao núcleo, com fallback legado sem duplicar a mensagem. |
 
 ## Decisões pendentes
 
@@ -27,4 +28,4 @@
 | Papéis administrativos | Formalizar a semântica de `superadmin` e a matriz completa de permissões. |
 | Tendências do Dashboard | Definir período padrão, timezone de negócio e base mínima para comparação. |
 | n8n | Aprovar eventos, destino, assinatura e política de retentativa antes de habilitar qualquer workflow. |
-| Adoção THÁNOS no Gateway | Definir seleção de plano, métricas de compatibilidade, telemetria e rollback antes de substituir a rota pública de chat. |
+| Ampliação do piloto THÁNOS | Avaliar novos planos READ somente após evidência de compatibilidade, telemetria e rollback; escrita, voz e ferramentas sensíveis ficam fora da rota. |

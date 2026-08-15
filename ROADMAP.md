@@ -8,10 +8,10 @@
 | M4 | Hermes resiliente e n8n preparado. | **Concluído**; ambos desativados por padrão. | Timeout, circuito, status sanitizado, allowlist e fallback cobertos. |
 | M5 | Serviço e UI do Dashboard tradicional. | **Concluído** por tenant. | Métricas, vazios, tendências, pendências e mobile validados. |
 | M6 | Camada inteligente e Configurações. | **Concluído**; insights somente leitura. | Fallback visual, permissões, controles allowlisted e auditoria aprovados. |
-| M7 | Ciclo THÁNOS: núcleo genérico, workspace/skill declarativos e piloto READ multi-step. | **Concluído**; interno e compatível. | Identidades segregadas, registros fechados, 2–3 passos READ, evidências compostas, auditoria e fallback testados. |
-| M8 | Adoção controlada do THÁNOS pela rota pública de chat. | **Futuro**, requer aprovação arquitetural. | Caracterização do Gateway, métricas de compatibilidade, telemetria, rollback exercitado e nenhuma regressão em texto, voz ou escrita. |
+| M7 | Ciclo THÁNOS: núcleo genérico, workspace/skill declarativos e piloto READ multi-step. | **Concluído**; compatível. | Identidades segregadas, registros fechados, 2–3 passos READ, evidências compostas, auditoria e fallback testados. |
+| M8 | Adoção controlada do THÁNOS pela rota pública de chat. | **Concluído**; desativada por padrão e limitada a texto READ elegível. | Flag, kill switch, audiência de tenant/usuário, telemetria sanitizada, fallback sem duplicação e rollback exercitado. |
 | M9 | Rollout controlado de provedor externo. | **Futuro**, requer aprovação operacional. | Contrato Hermes validado, métricas de erro/latência aceitáveis e rollback exercitado. |
 
 ## Rollback
 
-O rollback operacional prioriza `AGENT_GATEWAY_PROVIDER=legacy`, `HERMES_ENABLED=false` e `N8N_ENABLED=false`, retornando o comportamento ao Agent Core local e desativando saídas externas. Migrações são exclusivamente aditivas; dados de histórico, voz e auditoria não são removidos durante a evolução.
+O rollback operacional prioriza `THANOS_PILOT_KILL_SWITCH=true` para novas mensagens do piloto e, quando aplicável, `AGENT_GATEWAY_PROVIDER=legacy`, `HERMES_ENABLED=false` e `N8N_ENABLED=false`. Essa combinação retorna o comportamento ao Agent Core local e desativa saídas externas. Migrações são exclusivamente aditivas; dados de histórico, voz e auditoria não são removidos durante a evolução.
