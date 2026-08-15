@@ -161,6 +161,7 @@ export class ThanosMultiStepReadOrchestrator {
     for (let offset = 0; offset < input.steps.length; offset += 1) {
       const tool = input.steps[offset];
       const step = offset + 1;
+      const stepStartedAt = this.now();
       try {
         assertThanosCapability(input.context, tool.requiredCapability);
       } catch (error) {
@@ -171,11 +172,11 @@ export class ThanosMultiStepReadOrchestrator {
           result: "capability_not_authorized",
           tool: tool.name,
           step,
+          durationMs: Math.max(0, this.now() - stepStartedAt),
         });
         throw error;
       }
 
-      const stepStartedAt = this.now();
       try {
         const evidence = await tool.execute(input.context);
         completed.push(Object.freeze({ tool, evidence }));

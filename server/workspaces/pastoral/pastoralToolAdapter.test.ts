@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { createThanosContext } from "../../thanos/context";
 import { toDomain, toWorkspaceKey, tenantIdFromOrganizationId } from "../../thanos/contextIdentity";
 import { pastoralSkillDefinition, pastoralWorkspaceDefinition } from "./workspaceDefinition";
-import { createPastoralMultiStepReadAdapters, createPastoralReadToolAdapter, PastoralSkillPolicyError } from "./pastoralToolAdapter";
+import { createPastoralDeclaredReadToolAdapter, createPastoralMultiStepReadAdapters, createPastoralReadToolAdapter, PastoralSkillPolicyError } from "./pastoralToolAdapter";
 import { pastoralToolCatalog } from "../../pastoral/toolCatalog";
 
 const tenantContext = { organizationId: 1, userId: 2, userName: "Ana", role: "leader" as const };
@@ -35,6 +35,24 @@ describe("adaptador de ferramentas do workspace Pastoral", () => {
     });
 
     expect(() => createPastoralReadToolAdapter({ repository, tenantContext, thanosContext: contextWithoutReadCapability, skill: pastoralSkillDefinition, toolCatalog: pastoralToolCatalog, message: "células" })).toThrow(PastoralSkillPolicyError);
+  });
+
+  it("nega consultar_relatorios sem capability antes de executar qualquer consulta", () => {
+    const contextWithoutReadCapability = createThanosContext({
+      workspaceKey: toWorkspaceKey("pastoral"), tenantId: tenantIdFromOrganizationId(1), domain: toDomain("pastoral"),
+      userId: 2, userName: "Ana", role: "leader", capabilities: [], channel: "chat", requestId: "report-no-capability",
+    });
+    const queryReports = vi.fn();
+
+    expect(() => createPastoralDeclaredReadToolAdapter({
+      repository: { queryReports } as any,
+      tenantContext,
+      thanosContext: contextWithoutReadCapability,
+      skill: pastoralSkillDefinition,
+      toolCatalog: pastoralToolCatalog,
+      tool: "consultar_relatorios",
+    })).toThrow(PastoralSkillPolicyError);
+    expect(queryReports).not.toHaveBeenCalled();
   });
 
   it("nega ferramenta sem autorização para o papel autenticado", () => {

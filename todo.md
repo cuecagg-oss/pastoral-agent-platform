@@ -192,3 +192,7 @@
 - [x] Correção THÁNOS — Reforçar `consultar_relatorios` em sucesso, negação, falha da terceira etapa, fallback parcial e isolamento multi-tenant.
 - [x] Correção THÁNOS — Exercitar piloto e kill switch em ambiente controlado, restaurar a configuração segura e registrar apenas evidência sanitizada.
 - [x] Correção THÁNOS — Executar validação integral, documentar somente evidências reais, criar checkpoint e sincronizar o branch principal.
+- [x] Fechamento THÁNOS — Registrar o commit inicial e provar duração não negativa nos eventos de etapa autorizada, falha e negação.
+- [x] Fechamento THÁNOS — Criar cobertura específica de `consultar_relatorios` para sucesso, terceira etapa, desabilitação, papel, capability, falha parcial e isolamento.
+- [x] Fechamento THÁNOS — Executar o rollback controlado com piloto elegível e kill switch no ambiente de desenvolvimento, restaurando o estado seguro.
+- [x] Fechamento THÁNOS — Documentar a evidência sanitizada, revalidar a aplicação, criar checkpoint e sincronizar o branch principal sem force push.

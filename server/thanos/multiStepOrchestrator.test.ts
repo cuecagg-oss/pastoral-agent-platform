@@ -67,8 +67,49 @@ describe("ThanosMultiStepReadOrchestrator", () => {
     expect(result.content).toBe("3 células ativas. Não foi possível concluir todas as consultas solicitadas no momento.");
     expect(result.evidence).toEqual({ summary: "3 células ativas.", data: { steps: [{ tool: "consultar_celulas", data: { total: 3 } }] } });
     expect(generator).not.toHaveBeenCalled();
-    expect(record).toHaveBeenCalledWith(expect.objectContaining({ action: "thanos.read.step.failed", step: 2, tool: "consultar_presenca", result: "tool_execution_failed" }));
+    expect(record).toHaveBeenCalledWith(expect.objectContaining({ action: "thanos.read.step.failed", step: 2, tool: "consultar_presenca", result: "tool_execution_failed", durationMs: expect.any(Number) }));
     expect(record).toHaveBeenCalledWith(expect.objectContaining({ action: "thanos.read.failed", result: "multistep_partial_fallback" }));
+  });
+
+  it("audita duração normalizada e contexto sanitizado quando a capability da etapa é negada", async () => {
+    const record = vi.fn().mockResolvedValue(undefined);
+    const timestamps = [20, 10];
+    const orchestrator = new ThanosMultiStepReadOrchestrator({ record }, () => timestamps.shift() ?? 10);
+    const privatePrompt = "relatório privado da pessoa confidencial";
+    const deniedContext = createThanosContext({
+      workspaceKey: toWorkspaceKey("pastoral"),
+      tenantId: tenantIdFromOrganizationId(8),
+      domain: toDomain("pastoral"),
+      userId: 2,
+      userName: "Pessoa",
+      role: "pastor",
+      capabilities: [],
+      channel: "chat",
+      requestId: "multi-denied-8",
+    });
+    const execute = vi.fn();
+
+    await expect(orchestrator.run({
+      context: deniedContext,
+      steps: [
+        { name: "consultar_relatorios", requiredCapability: "agent:read", execute },
+        { name: "consultar_presenca", requiredCapability: "agent:read", execute },
+      ],
+      system: "Sistema",
+      user: privatePrompt,
+      generator: { generate: async () => ({ content: "Resposta", provider: "deterministic", model: "rules-v1" }) },
+    })).rejects.toThrow("Capability não autorizada");
+
+    const deniedEvent = record.mock.calls.map(([event]) => event).find(event => event.action === "thanos.read.denied");
+    expect(deniedEvent).toEqual(expect.objectContaining({
+      status: "denied",
+      tool: "consultar_relatorios",
+      step: 1,
+      durationMs: 0,
+      context: expect.objectContaining({ requestId: "multi-denied-8", tenantId: "org:8", workspaceKey: "pastoral", domain: "pastoral" }),
+    }));
+    expect(execute).not.toHaveBeenCalled();
+    expect(JSON.stringify(deniedEvent)).not.toContain(privatePrompt);
   });
 
   it("registra duração não negativa e requestId comum em cada etapa de um plano de três leituras", async () => {

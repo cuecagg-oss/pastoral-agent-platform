@@ -109,3 +109,11 @@ Foi corrigido o ponto de falha pós-resposta identificado na adoção pública. 
 O orquestrador multi-step passou a registrar duração não negativa para cada etapa. A auditoria de etapa contém o `requestId` comum, `workspaceKey`, `tenantId`, domínio, índice e ferramenta; as provas abrangem a terceira consulta `consultar_relatorios` em sucesso, falha parcial e tenant B, sem cruzamento de contexto. A mutation pública foi exercitada com piloto desligado, público e intenção elegíveis, audiência e intenção não elegíveis, falha THÁNOS e kill switch, confirmando exatamente uma entrada de usuário e uma resposta de assistente por envio.
 
 O rollback foi executado em cenário controlado pela configuração de runtime: o plano READ elegível foi aceito e, em seguida, o kill switch redirecionou imediatamente as novas mensagens ao caminho legado. Nenhuma configuração publicada foi alterada. A regressão aprovou **107 testes em 34 arquivos**, além de `pnpm check`, build de produção e auditoria de dependências sem vulnerabilidades conhecidas.
+
+## Fechamento das pendências de validação THÁNOS
+
+A medição de duração foi deslocada para antes das verificações de capability. Assim, uma etapa negada recebe `durationMs` finito e não negativo, com o mesmo `requestId`, tenant, workspace, domínio, ferramenta e índice do fluxo autorizado; nenhum executor ou repositório é chamado quando a autorização falha.
+
+`consultar_relatorios` recebeu provas dedicadas de sucesso isolado, seleção no terceiro passo composto, desabilitação no catálogo, papel sem autorização, capability ausente, falha parcial e isolamento de tenant. As recusas ocorrem antes da consulta e não persistem resposta. A auditoria de três etapas confirma duração não negativa para células, presença e relatórios, sem registrar a pergunta original.
+
+A prova operacional final usou variáveis temporárias somente no processo de teste. Ela ativou a audiência controlada, confirmou o roteamento THÁNOS para o plano READ de três ferramentas, aplicou o kill switch para a requisição imediatamente posterior, confirmou a resposta pelo legado e restaurou todos os valores de ambiente de origem. Nenhuma configuração de produção foi gravada ou publicada durante o exercício. A regressão final aprovou **113 testes em 35 arquivos**, `pnpm check`, build de produção e auditoria de dependências sem vulnerabilidades conhecidas.
