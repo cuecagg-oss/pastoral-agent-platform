@@ -1,11 +1,9 @@
 import { ModelRouter, type ModelGenerationInput, type ModelGenerationResult } from "../../pastoral/modelRouter";
-import { ToolUnavailableError } from "../../pastoral/policy";
-import { getToolCatalogEntry } from "../../pastoral/toolCatalog";
 import { getTenantToolCatalog } from "../../pastoral/tenantToolConfig";
-import { chooseReadTool, executeReadTool } from "../../pastoral/toolRegistry";
 import type { AgentResponse, PastoralRepository, TenantContext, ToolCatalogEntry } from "../../pastoral/types";
+import { thanosSkillRegistry, thanosWorkspaceRegistry } from "../../thanos/defaultRegistries";
 import { ThanosReadOrchestrator, type ThanosAuditPort } from "../../thanos/orchestrator";
-import { pastoralWorkspaceDefinition } from "./workspaceDefinition";
+import { createPastoralReadToolAdapter } from "./pastoralToolAdapter";
 
 const AGENT_NAME = "assistente-pastoral";
 const SYSTEM_PROMPT = "Você é um assistente pastoral. Responda em português, de forma objetiva, usando exclusivamente a evidência fornecida. Não invente dados, não exponha dados de outra organização e não revele raciocínio interno.";
@@ -24,14 +22,23 @@ export class PastoralThanosFacade {
     requestId: string;
     modelGenerator?: { generate(input: ModelGenerationInput): Promise<ModelGenerationResult> };
   }>): Promise<AgentResponse> {
-    const thanosContext = pastoralWorkspaceDefinition.resolveContext({
+    const workspace = thanosWorkspaceRegistry.get("pastoral");
+    const thanosContext = workspace.resolveContext({
       tenantContext: input.context,
       channel: "chat",
       conversationId: input.conversationId,
       serverRequestId: input.requestId,
     });
-    const tool = chooseReadTool(input.message);
+    const skill = thanosSkillRegistry.getForWorkspace(thanosContext.workspaceKey, "pastoral-assistant");
     const toolCatalog = await this.resolveToolCatalog(input.context);
+    const tool = createPastoralReadToolAdapter({
+      repository: this.repository,
+      tenantContext: input.context,
+      thanosContext,
+      skill,
+      toolCatalog,
+      message: input.message,
+    });
     const audit: ThanosAuditPort = {
       record: async event => {
         const denied = event.status === "denied";
@@ -55,17 +62,13 @@ export class PastoralThanosFacade {
     try {
       const result = await orchestrator.run({
         context: thanosContext,
-        tool: {
-          name: tool,
-          requiredCapability: "agent:read",
-          execute: async () => executeReadTool(this.repository, input.context, tool, toolCatalog),
-        },
+        tool,
         system: SYSTEM_PROMPT,
         user: `Pergunta: ${input.message}`,
         generator: {
           generate: async generationInput => (input.modelGenerator ?? this.modelRouter).generate({
             system: generationInput.system,
-            user: `${generationInput.user}\n\nEvidência da ferramenta ${tool}: ${JSON.stringify(generationInput.evidence.data)}`,
+            user: `${generationInput.user}\n\nEvidência da ferramenta ${tool.name}: ${JSON.stringify(generationInput.evidence.data)}`,
             fallback: generationInput.fallback,
           }),
         },
@@ -76,20 +79,17 @@ export class PastoralThanosFacade {
         role: "assistant",
         content: result.content,
         model: result.model,
-        tool,
+        tool: tool.name,
       });
       return {
         content: result.content,
         provider: result.provider,
         model: result.model,
-        tool,
+        tool: tool.name,
         requestId: result.requestId,
         confirmationStatus: "not_required",
       };
     } catch (error) {
-      if (error instanceof ToolUnavailableError) {
-        throw error;
-      }
       throw error;
     }
   }

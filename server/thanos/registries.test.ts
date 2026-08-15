@@ -44,8 +44,12 @@ describe("registros fechados do THÁNOS", () => {
   it("limita a skill pastoral ao workspace registrado e declara suas ferramentas", () => {
     const skill = thanosSkillRegistry.getForWorkspace(toWorkspaceKey("pastoral"), "pastoral-assistant");
     expect(skill.domain).toBe("pastoral");
-    expect(skill.allowedTools).toContain("consultar_visitantes");
-    expect(skill.allowedTools).toContain("registrar_acompanhamento_visitante");
+    expect(skill.allowedTools).toContain("consultar_celulas");
+    expect(skill.allowedTools).not.toContain("consultar_visitantes");
+    expect(skill.allowedTools).not.toContain("registrar_acompanhamento_visitante");
+    expect(skill.allowedChannels).toEqual(["chat"]);
+    expect(skill.requiredCapabilities).toEqual(["agent:read"]);
+    expect(skill.readOnly).toBe(true);
     expect(thanosWorkspaceRegistry.list()).toHaveLength(1);
   });
 });

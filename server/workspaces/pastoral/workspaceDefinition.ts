@@ -50,15 +50,15 @@ export const pastoralSkillDefinition: SkillDefinition = Object.freeze({
   key: "pastoral-assistant",
   workspaceKey: pastoralWorkspaceKey,
   domain: pastoralDomain,
-  description: "Skill autorizada para consultas e acompanhamentos pastorais.",
+  description: "Skill autorizada para consultas pastorais em modo somente leitura.",
   allowedTools: Object.freeze([
     "consultar_celulas",
     "consultar_relatorios",
     "consultar_presenca",
-    "consultar_visitantes",
-    "consultar_lideres",
-    "registrar_acompanhamento_visitante",
   ]),
+  allowedChannels: Object.freeze(["chat"] as const),
+  requiredCapabilities: Object.freeze(["agent:read"] as const),
+  readOnly: true,
 });
 
 export const pastoralWorkspaceIdentity = Object.freeze({ workspaceKey: pastoralWorkspaceKey, domain: pastoralDomain });

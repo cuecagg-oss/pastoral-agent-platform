@@ -28,6 +28,9 @@ export type SkillDefinition = Readonly<{
   domain: Domain;
   description: string;
   allowedTools: readonly string[];
+  allowedChannels: readonly ThanosChannel[];
+  requiredCapabilities: readonly ThanosCapability[];
+  readOnly: boolean;
 }>;
 
 export type WorkspaceRegistration<TSourceContext> = WorkspaceDefinition<TSourceContext>;

@@ -160,7 +160,12 @@
 - [x] Fase C — Implementar orquestrador central de uma etapa com contexto THÁNOS, gate de capability e decisões auditáveis, sem habilitar escrita multi-step.
 - [x] Fase C — Criar fachada Pastoral compatível para preservar os contratos públicos existentes e permitir rollback interno por delegação.
 - [x] Fase C — Cobrir a infraestrutura central com testes de portas, negação de capability, auditoria sanitizada e equivalência da fachada.
-- [ ] Fase D — Converter o Pastoral em workspace, skill e ferramentas declaradas.
+- [x] Fase D — Converter o Pastoral em workspace, skill e ferramentas declaradas.
+- [x] Fase D — Declarar as ferramentas pastorais como adaptadores de workspace ligados ao catálogo já autorizado, sem recriar regras de permissão no núcleo.
+- [x] Fase D — Declarar a skill Pastoral com limites de canal, capabilities e política de apenas leitura para o piloto THÁNOS.
+- [x] Fase D — Trocar a fachada compatível por resolução no registro de workspace e skill, mantendo equivalência de resposta, confirmação e auditoria.
+- [x] Fase D — Cobrir a seleção de workspace, skill e ferramenta Pastoral, incluindo negação de associação, papel e capability incompatíveis.
 - [ ] Fase E — Implementar e validar piloto multi-step somente leitura com no máximo três ferramentas autorizadas.
 - [ ] Fase F — Validar integralmente, documentar e estabilizar a arquitetura THÁNOS.
 - [ ] Publicar e entregar o ciclo THÁNOS no repositório público.
+- [x] Fase D — Alinhar a lista declarada de ferramentas da skill somente leitura às categorias READ autorizadas pelo catálogo pastoral.

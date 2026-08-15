@@ -24,7 +24,12 @@ export class SkillRegistry {
       if (entries.has(definition.key)) {
         throw new Error(`Skill duplicada no registro: ${definition.key}.`);
       }
-      entries.set(definition.key, Object.freeze({ ...definition, allowedTools: Object.freeze([...definition.allowedTools]) }));
+      entries.set(definition.key, Object.freeze({
+        ...definition,
+        allowedTools: Object.freeze([...definition.allowedTools]),
+        allowedChannels: Object.freeze([...definition.allowedChannels]),
+        requiredCapabilities: Object.freeze([...definition.requiredCapabilities]),
+      }));
     }
     this.definitions = entries;
   }
