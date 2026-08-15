@@ -133,5 +133,9 @@
 - [x] Permitir somente ajustes administrativos já suportados: preferência do Agent Gateway e habilitação de ferramentas declaradas por organização, com confirmação de alteração e atualização otimista segura.
 - [x] Exibir estados sanitizados e somente leitura para Hermes, n8n, voz, usuários, auditoria e catálogo de ferramentas, sem criação arbitrária de tools ou workflows.
 - [x] Cobrir autorização, contratos sanitizados, mutações permitidas e navegação responsiva em testes e verificação visual.
-- [ ] Cobrir segurança, isolamento, fallback, confirmação, Dashboard e Configurações com testes e verificação visual responsiva.
+- [x] Cobrir segurança, isolamento, fallback, confirmação, Dashboard e Configurações com testes e verificação visual responsiva.
+- [x] Executar regressão integral, checagem de tipos, build e auditoria de dependências, corrigindo achados reproduzíveis antes da entrega.
+- [x] Revalidar isolamento de tenant, acesso administrativo, catálogo de ferramentas, confirmações idempotentes e auditoria por meio dos contratos tRPC e testes direcionados.
+- [x] Revalidar os fluxos de voz em formatos móveis suportados, privacidade da transcrição e os estados de fallback de TTS sem expor conteúdo reconhecido.
+- [x] Verificar visualmente Dashboard, Chat e Configurações em desktop e celular, incluindo estados de carregamento e recuperação de falhas onde disponíveis.
 - [ ] Atualizar documentação, salvar checkpoint, sincronizar o GitHub e entregar a evolução publicada.
