@@ -25,7 +25,7 @@ A revisão encontrou inconsistências concretas no fluxo de voz, na coerência d
 | Verificação | Resultado |
 |---|---|
 | Checagem TypeScript | Aprovada sem erros. |
-| Testes Vitest | 10 arquivos e 23 testes aprovados. |
+| Testes Vitest | 10 arquivos e 24 testes aprovados. |
 | Integridade multi-tenant | Consultas somente leitura executadas sobre organizações, memberships e registros relacionados. |
 | Build de produção | Aprovado; artefatos de cliente e servidor gerados. |
 | Auditoria de produção | Sem vulnerabilidades críticas, altas ou moderadas. |

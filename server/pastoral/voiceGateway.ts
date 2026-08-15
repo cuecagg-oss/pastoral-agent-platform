@@ -15,7 +15,11 @@ type TranscribeVoiceInput = {
 };
 
 function extensionFor(mimeType: string) {
-  return mimeType.split("/")[1]?.replace("mpeg", "mp3") || "webm";
+  const normalized = mimeType.split(";")[0]?.trim().toLowerCase();
+  if (normalized === "audio/mp4" || normalized === "audio/x-m4a") return "m4a";
+  if (normalized === "audio/mpeg") return "mp3";
+  if (normalized === "audio/x-wav") return "wav";
+  return normalized?.split("/")[1] || "webm";
 }
 
 export async function transcribeVoiceInput(input: TranscribeVoiceInput) {

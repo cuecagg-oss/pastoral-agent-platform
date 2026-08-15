@@ -36,4 +36,18 @@ describe("Voice gateway", () => {
     })).rejects.toThrow("Não foi possível transcrever o áudio");
     expect(audit).toContainEqual(expect.objectContaining({ action: "voice.transcribe", status: "failure" }));
   });
+
+  it("armazena áudio MP4 de navegador móvel com a extensão m4a suportada", async () => {
+    let storedKey = "";
+    await transcribeVoiceInput({
+      context,
+      audioBytes: new Uint8Array([1, 2, 3]),
+      mimeType: "audio/mp4; codecs=mp4a.40.2",
+      storagePut: async (key) => { storedKey = key; return { key, url: `/manus-storage/${key}` }; },
+      getStoredAudioUrl: async key => `https://signed-storage.local/${key}`,
+      getVoice: () => ({ transcribe: async () => ({ text: "Olá, igreja.", provider: "built-in-whisper" }) }),
+      repository: { audit: async () => undefined },
+    });
+    expect(storedKey).toMatch(/\.m4a$/);
+  });
 });

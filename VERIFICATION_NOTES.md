@@ -29,3 +29,9 @@ O smoke test externo multipart alcançou a aplicação e recebeu `401` JSON sem 
 Com o multipart aceito pelo gateway, os registros autenticados mostraram que o processamento ainda falhava depois do upload. A causa era a URL relativa privada retornada por `storagePut` (`/manus-storage/...`), que não é um endereço que o serviço de transcrição consegue buscar. O gateway agora solicita uma URL de leitura assinada pelo `storageGetSignedUrl` e somente essa URL é enviada ao provedor; o caminho interno e os bytes de áudio permanecem fora do log de auditoria.
 
 O comportamento foi coberto por teste de unidade que confirma uma URL assinada no provedor. A checagem TypeScript e a regressão de 23 testes foram aprovadas. A validação final permanece dependente de uma gravação autenticada no navegador do usuário.
+
+## Compatibilidade m4a em celular
+
+O teste no navegador desktop passou, enquanto a transcrição móvel continuou falhando. A revisão do formato revelou que navegadores móveis podem gravar `audio/mp4` com codec AAC, mas o gateway o salvava com extensão `.mp4`; a transcrição integrada declara suporte a `.m4a`, não a `.mp4`. O mapeamento agora normaliza `audio/mp4` e `audio/x-m4a` para a extensão `.m4a`, preservando MIME, tamanho, URL assinada e os controles multipart.
+
+Foi adicionado um teste que verifica o nome `.m4a` gerado para um MIME móvel com parâmetros de codec. A checagem TypeScript, 24 testes e o build de produção foram aprovados. Resta confirmar a transcrição em um dispositivo móvel autenticado.

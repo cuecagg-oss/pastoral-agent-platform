@@ -26,6 +26,10 @@
 - [x] Substituir o envio bruto de áudio bloqueado pelo gateway por upload multipart autenticado, mantendo limites, auditoria e transcrição.
 - [x] Investigar a falha de voz reproduzida em navegador, incluindo resposta autenticada, armazenamento privado e transcrição.
 - [x] Fornecer URL assinada de leitura ao provedor de transcrição em vez do caminho privado interno do armazenamento.
+- [x] Investigar e corrigir a transcrição que falha apenas no navegador móvel, cobrindo MIME, codec e feedback ao usuário.
+- [x] Mapear `audio/mp4` de navegadores móveis para extensão `.m4a` compatível com a transcrição e cobrir o mapeamento em teste.
+- [ ] Validar em dispositivo móvel autenticado a gravação e transcrição após o mapeamento `audio/mp4` para `.m4a`.
+- [ ] Se a transcrição móvel ainda falhar, instrumentar e corrigir o feedback específico de MIME, codec ou provedor exibido ao usuário.
 - [x] Adicionar e validar um estado vazio explícito no dashboard para uma igreja sem registros pastorais.
 - [x] Diagnosticar e corrigir a falha no envio de mensagem de voz reportada em celular, incluindo feedback acionável para permissões, upload e transcrição.
 - [x] Comparar requisitos funcionais e de segurança com o schema, procedimentos, interface e documentação do MVP.
