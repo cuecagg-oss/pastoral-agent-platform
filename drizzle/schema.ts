@@ -223,5 +223,39 @@ export const auditLogs = mysqlTable(
   ],
 );
 
+export const chatSyntheticMonitors = mysqlTable(
+  "chat_synthetic_monitors",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    name: varchar("name", { length: 80 }).notNull().unique(),
+    scheduleCronTaskUid: varchar("schedule_cron_task_uid", { length: 65 }),
+    enabled: boolean("enabled").default(true).notNull(),
+    cadenceMinutes: int("cadence_minutes").default(15).notNull(),
+    lastRunAt: timestamp("last_run_at"),
+    lastStatus: mysqlEnum("last_status", ["healthy", "unhealthy", "skipped"]),
+    updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+  },
+  table => [index("chat_synthetic_monitor_task_uid_idx").on(table.scheduleCronTaskUid)],
+);
+
+export const chatSyntheticCheckRuns = mysqlTable(
+  "chat_synthetic_check_runs",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    monitorId: int("monitor_id").notNull(),
+    organizationId: int("organization_id").notNull(),
+    scheduledFor: timestamp("scheduled_for").notNull(),
+    status: mysqlEnum("status", ["healthy", "unhealthy", "skipped"]).notNull(),
+    responseValid: boolean("response_valid").notNull(),
+    durationMs: int("duration_ms").notNull(),
+    reason: varchar("reason", { length: 120 }),
+    checkedAt: timestamp("checked_at").defaultNow().notNull(),
+  },
+  table => [
+    uniqueIndex("chat_synthetic_check_run_unique").on(table.monitorId, table.organizationId, table.scheduledFor),
+    index("chat_synthetic_check_runs_organization_idx").on(table.organizationId, table.checkedAt),
+  ],
+);
+
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;

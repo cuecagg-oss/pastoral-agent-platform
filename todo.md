@@ -206,3 +206,7 @@
 - [x] Validação operacional THÁNOS v2 — Executar regressão, tipos, build, auditoria de diff e sincronização final sem force push.
 - [x] Bug crítico do chat — Diagnosticar e corrigir mensagens enviadas que não recebem resposta no Assistente Pastoral publicado.
 - [x] Bug crítico do chat — Cobrir a regressão de envio, resposta, persistência e estado visual, validar em produção e sincronizar a correção.
+- [x] Monitor sintético do chat — Definir checagem periódica isolada, critérios de resposta válida e persistência sanitizada de saúde.
+- [x] Monitor sintético do chat — Implementar endpoint autenticado de execução agendada, idempotência, telemetria e controles operacionais.
+- [ ] Monitor sintético do chat — Cobrir sucesso, resposta inválida, falha, autenticação de cron e isolamento em testes automatizados.
+- [ ] Monitor sintético do chat — Publicar, ativar a rotina periódica, validar execução real e sincronizar a versão final.

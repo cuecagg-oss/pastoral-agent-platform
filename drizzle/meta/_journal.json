@@ -43,6 +43,13 @@
       "when": 1786772486720,
       "tag": "0005_enriched_agent_audit",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "5",
+      "when": 1786825698339,
+      "tag": "0006_clumsy_ares",
+      "breakpoints": true
     }
   ]
 }

@@ -15,6 +15,7 @@ import { getTenantToolCatalog, updateTenantToolStatus } from "./pastoral/tenantT
 import { pastoralToolNames } from "./pastoral/types";
 import { DatabasePastoralRepository, dashboardSummary, getOrCreateConversation, getTenantContextForUser, listMessages } from "./pastoral/repository";
 import { PastoralThanosFacade } from "./workspaces/pastoral/thanosFacade";
+import { getSyntheticChatHealth } from "./pastoral/chatSyntheticMonitor";
 
 type AppRouterDependencies = Readonly<{
   thanosPilotRouter?: Pick<ThanosPilotRouter, "respond">;
@@ -104,6 +105,11 @@ export function createAppRouter(dependencies: AppRouterDependencies = {}) {
     settingsOverview: protectedProcedure.query(async ({ ctx }) => {
       const tenant = await currentTenant(ctx.user.id);
       return getAdminSettingsOverview(tenant);
+    }),
+    chatHealth: protectedProcedure.query(async ({ ctx }) => {
+      const tenant = await currentTenant(ctx.user.id);
+      assertAdministrativePermission(tenant);
+      return getSyntheticChatHealth(tenant);
     }),
     currentConversation: protectedProcedure.query(async ({ ctx }) => {
       const tenant = await currentTenant(ctx.user.id);
