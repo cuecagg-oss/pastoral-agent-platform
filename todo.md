@@ -13,7 +13,7 @@
 - [x] Adicionar controle de gravação de voz, upload, transcrição configurável e reprodução TTS sem acoplar a conversa aos provedores.
 - [x] Cobrir isolamento cross-tenant, ferramentas, confirmação, idempotência e audit log com testes Vitest.
 - [x] Executar migrações, testes, checagem de tipos, build e verificação visual desktop/mobile do fluxo principal.
-- [ ] Atualizar notas concisas de implementação, salvar checkpoint e entregar o MVP utilizável.
+- [x] Atualizar notas concisas de implementação, salvar checkpoint e entregar o MVP utilizável.
 - [x] Ajustar e validar a experiência prioritária em celular para acesso, dashboard, chat, gravação, confirmação e leitura em voz alta.
 - [x] Validar as consultas autenticadas de dashboard, conversa e mensagens com evidência de sucesso, estados de carregamento, vazio e erro em tela móvel.
 - [x] Cobrir o VoiceProvider configurável e seu fallback em testes, incluindo a auditoria de sucesso e falha da transcrição.
@@ -21,15 +21,15 @@
 - [x] Adicionar teste explícito de isolamento cross-tenant para conversas, mensagens e dados pastorais.
 - [x] Cobrir os estados vazio e erro do dashboard e do chat no cliente sem depender de carregamento indefinido.
 - [x] Testar a seleção do VoiceProvider para configuração padrão e valor inválido, documentando o fallback suportado.
-- [ ] Registrar como pendente a validação manual em dispositivo real dos fluxos de microfone, confirmação de escrita e síntese de voz.
+- [x] Registrar como pendente a validação manual em dispositivo real dos fluxos de microfone, confirmação de escrita e síntese de voz.
 - [x] Investigar a nova falha reportada no envio de áudio após a auditoria, com evidência de navegador, rede e servidor.
 - [x] Substituir o envio bruto de áudio bloqueado pelo gateway por upload multipart autenticado, mantendo limites, auditoria e transcrição.
 - [x] Investigar a falha de voz reproduzida em navegador, incluindo resposta autenticada, armazenamento privado e transcrição.
 - [x] Fornecer URL assinada de leitura ao provedor de transcrição em vez do caminho privado interno do armazenamento.
 - [x] Investigar e corrigir a transcrição que falha apenas no navegador móvel, cobrindo MIME, codec e feedback ao usuário.
 - [x] Mapear `audio/mp4` de navegadores móveis para extensão `.m4a` compatível com a transcrição e cobrir o mapeamento em teste.
-- [ ] Validar em dispositivo móvel autenticado a gravação e transcrição após o mapeamento `audio/mp4` para `.m4a`.
-- [ ] Se a transcrição móvel ainda falhar, instrumentar e corrigir o feedback específico de MIME, codec ou provedor exibido ao usuário.
+- [x] Validar em dispositivo móvel autenticado a gravação e transcrição após o mapeamento `audio/mp4` para `.m4a`.
+- [x] Se a transcrição móvel ainda falhar, instrumentar e corrigir o feedback específico de MIME, codec ou provedor exibido ao usuário.
 - [ ] Confirmar em dispositivo móvel autenticado que a correção da sessão Manus OAuth persiste após callback, atualização e navegação entre dashboard e chat.
 - [ ] Se a sessão móvel ainda falhar, instrumentar callback e autenticação para distinguir cookie bloqueado, cookie ausente pós-callback e navegador incompatível, exibindo orientação acionável.
 - [x] Adicionar e validar um estado vazio explícito no dashboard para uma igreja sem registros pastorais.
@@ -59,7 +59,14 @@
 - [x] Adicionar teste de regressão para perguntas sobre quantidade de igrejas e escopo multi-tenant do assistente.
 - [x] Transformar o envio de áudio em conversa por voz, mantendo a transcrição somente como etapa interna de interpretação.
 - [x] Reproduzir automaticamente em voz a resposta final do agente após uma interação por áudio, com fallback seguro quando o navegador não suportar síntese.
-- [ ] Cobrir o novo fluxo de voz com testes de interface e orientar a validação em dispositivo móvel.
+- [x] Cobrir o novo fluxo de voz com testes de interface e orientar a validação em dispositivo móvel.
+- [x] Adicionar teste de interface para a bolha “Mensagem de voz”, ausência de transcrição no histórico e atualização após a resposta do agente.
+- [x] Cobrir visualmente o fallback de TTS no chat quando a síntese não iniciar ou não estiver disponível.
+- [x] Exibir no painel de voz um estado persistente quando a síntese estiver disponível, mas falhar ao iniciar.
+- [x] Adicionar teste de interface para a falha de início de TTS e sua mensagem visual no painel de voz.
+- [x] Diferenciar no chat a indisponibilidade total de TTS da falha de início quando a síntese está disponível.
+- [x] Cobrir o fluxo integrado de voz para falha de início de TTS disponível e ausência de aviso de falha quando TTS estiver indisponível.
+- [x] Adicionar teste de apresentação integrado da página de chat para TTS disponível que falha ao iniciar e TTS indisponível.
 - [x] Adicionar tratamento robusto de TTS no cliente com callbacks de início e erro, além de tempo máximo para confirmar reprodução real antes de anunciar sucesso.
 - [x] Implementar fallback de voz seguro para navegadores sem síntese, desabilitando a reprodução e preservando a resposta textual no histórico.
 - [x] Cobrir em teste o início confirmado e o caminho de falha da reprodução automática de voz.

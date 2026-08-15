@@ -1,5 +1,6 @@
 import { AIChatBox, type Message } from "@/components/AIChatBox";
 import { VoiceRecorder } from "@/components/VoiceRecorder";
+import { getVoicePlaybackIssue, VoiceFeatureCard } from "@/components/VoiceFeatureCard";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -8,7 +9,8 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { invalidateActiveConversationMessages } from "@/lib/conversationCache";
 import { trpc } from "@/lib/trpc";
 import { canUseVoiceSynthesis, extractVoiceAgentReply, playVoiceResponse, type VoiceAgentReply } from "@/lib/voiceInteraction";
-import { Loader2, MessageCircleHeart, Sparkles, Volume2 } from "lucide-react";
+import { Loader2, MessageCircleHeart, Sparkles } from "lucide-react";
+import * as React from "react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -18,6 +20,17 @@ type PendingFollowup = {
   note: string;
   idempotencyKey: string;
 };
+
+type VoiceConversationPanelProps = {
+  isSynthesisAvailable: boolean;
+  latestAnswer?: string;
+  playbackIssue: string | null;
+  onSpeakLatest: () => void;
+};
+
+export function VoiceConversationPanel({ isSynthesisAvailable, latestAnswer, playbackIssue, onSpeakLatest }: VoiceConversationPanelProps) {
+  return <VoiceFeatureCard isSynthesisAvailable={isSynthesisAvailable} hasLatestAnswer={!!latestAnswer} onSpeakLatest={onSpeakLatest} playbackIssue={playbackIssue} />;
+}
 
 export default function PastoralChat() {
   const { user, isAuthenticated } = useAuth();
@@ -44,6 +57,7 @@ export default function PastoralChat() {
     onError: error => toast.error(error.message),
   });
   const [isUploadingVoice, setIsUploadingVoice] = useState(false);
+  const [voicePlaybackIssue, setVoicePlaybackIssue] = useState<string | null>(null);
 
   const messages = useMemo<Message[]>(() => (messagesQuery.data ?? []).map(message => ({
     role: message.role,
@@ -84,6 +98,7 @@ export default function PastoralChat() {
       if (!response.ok || !agentReply) throw new Error(payload.error || "Não foi possível enviar o áudio.");
       applyAgentReply(agentReply);
       const startedSpeech = await speak(agentReply.content);
+      setVoicePlaybackIssue(getVoicePlaybackIssue(voiceSynthesisAvailable, startedSpeech));
       toast.success(startedSpeech ? "O assistente respondeu por voz." : "Resposta recebida. A voz não foi iniciada neste navegador; consulte a resposta no histórico.");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Não foi possível enviar o áudio. Tente novamente.");
@@ -94,7 +109,9 @@ export default function PastoralChat() {
 
   const speakLatest = async () => {
     if (!latestAnswer) return;
-    if (!await speak(latestAnswer)) toast.error("A leitura em voz alta não foi iniciada. Consulte a resposta no histórico.");
+    const startedSpeech = await speak(latestAnswer);
+    setVoicePlaybackIssue(getVoicePlaybackIssue(voiceSynthesisAvailable, startedSpeech));
+    if (!startedSpeech) toast.error("A leitura em voz alta não foi iniciada. Consulte a resposta no histórico.");
   };
 
   return (
@@ -141,14 +158,7 @@ export default function PastoralChat() {
               <div className="flex items-center gap-2 text-[#173b34]"><Sparkles className="size-4" /><h2 className="font-semibold">Como usar</h2></div>
               <p className="mt-3 text-sm leading-6 text-muted-foreground">Faça perguntas em linguagem natural. O assistente consulta apenas ferramentas autorizadas para a igreja da sua sessão.</p>
             </div>
-            <div className="rounded-2xl border border-[#e7e1d4] bg-card p-5 shadow-sm">
-              <h2 className="font-semibold text-[#173b34]">Voz</h2>
-              <p className="mt-2 text-sm leading-6 text-muted-foreground">Envie uma mensagem de voz. O áudio é interpretado internamente; o histórico mostra a mensagem de voz, sem exibir a transcrição, e registra a resposta do assistente.</p>
-              {!voiceSynthesisAvailable ? <p className="mt-3 text-xs leading-5 text-muted-foreground">A síntese de voz não está disponível neste navegador. A resposta continuará disponível no histórico.</p> : null}
-              <Button variant="outline" className="mt-4 w-full" onClick={speakLatest} disabled={!latestAnswer || !voiceSynthesisAvailable}>
-                <Volume2 className="mr-2 size-4" /> Ouvir última resposta
-              </Button>
-            </div>
+            <VoiceConversationPanel isSynthesisAvailable={voiceSynthesisAvailable} latestAnswer={latestAnswer} onSpeakLatest={speakLatest} playbackIssue={voicePlaybackIssue} />
           </aside>
         </section>
       </div>
