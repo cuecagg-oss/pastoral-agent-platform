@@ -146,6 +146,7 @@ export const conversationMessages = mysqlTable(
     organizationId: int("organizationId").notNull(),
     userId: int("userId").notNull(),
     role: mysqlEnum("role", ["user", "assistant"]).notNull(),
+    messageType: mysqlEnum("messageType", ["text", "voice"]).default("text").notNull(),
     content: text("content").notNull(),
     model: varchar("model", { length: 120 }),
     tool: varchar("tool", { length: 120 }),

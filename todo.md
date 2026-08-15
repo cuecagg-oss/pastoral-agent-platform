@@ -65,3 +65,8 @@
 - [x] Cobrir em teste o início confirmado e o caminho de falha da reprodução automática de voz.
 - [x] Comparar formalmente a implementação atual com o prompt mestre e apresentar uma matriz de aderência, lacunas e prioridades.
 - [x] Avaliar a resposta a “quantas igrejas temos” quanto a segurança multi-tenant, clareza de produto e registro da interação por voz.
+- [x] Registrar uma mensagem de voz no histórico sem texto transcrito, preservando organização, usuário, horário e auditoria.
+- [x] Exibir no chat uma bolha acessível de “Mensagem de voz” sem revelar o conteúdo reconhecido.
+- [x] Cobrir privacidade, isolamento e ordenação do histórico de voz com testes de regressão.
+- [x] Adicionar regressão explícita de isolamento para que uma mensagem de voz não possa ser lida por outro tenant ou usuário.
+- [x] Adicionar regressão explícita para um segundo usuário da mesma organização que tente ler uma mensagem de voz em conversa alheia.

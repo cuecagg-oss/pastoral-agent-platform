@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
-import { Loader2, Send, User, Sparkles } from "lucide-react";
+import { Loader2, Mic, Send, User, Sparkles } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { Streamdown } from "streamdown";
 
@@ -12,6 +12,7 @@ import { Streamdown } from "streamdown";
 export type Message = {
   role: "system" | "user" | "assistant";
   content: string;
+  messageType?: "text" | "voice";
 };
 
 export type AIChatBoxProps = {
@@ -264,6 +265,16 @@ export function AIChatBox({
                         <div className="prose prose-sm dark:prose-invert max-w-none">
                           <Streamdown>{message.content}</Streamdown>
                         </div>
+                      ) : message.messageType === "voice" ? (
+                        <div className="flex items-center gap-2.5" aria-label="Mensagem de voz enviada">
+                          <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary-foreground/15">
+                            <Mic className="size-4" aria-hidden="true" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium">Mensagem de voz</p>
+                            <p className="mt-0.5 text-xs text-primary-foreground/80">Conteúdo processado de forma privada</p>
+                          </div>
+                        </div>
                       ) : (
                         <p className="whitespace-pre-wrap text-sm">
                           {message.content}
@@ -273,7 +284,7 @@ export function AIChatBox({
 
                     {message.role === "user" && (
                       <div className="size-8 shrink-0 mt-1 rounded-full bg-secondary flex items-center justify-center">
-                        <User className="size-4 text-secondary-foreground" />
+                        {message.messageType === "voice" ? <Mic className="size-4 text-secondary-foreground" /> : <User className="size-4 text-secondary-foreground" />}
                       </div>
                     )}
                   </div>

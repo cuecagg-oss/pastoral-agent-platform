@@ -45,7 +45,11 @@ export default function PastoralChat() {
   });
   const [isUploadingVoice, setIsUploadingVoice] = useState(false);
 
-  const messages = useMemo<Message[]>(() => (messagesQuery.data ?? []).map(message => ({ role: message.role, content: message.content })), [messagesQuery.data]);
+  const messages = useMemo<Message[]>(() => (messagesQuery.data ?? []).map(message => ({
+    role: message.role,
+    content: message.content,
+    messageType: message.messageType,
+  })), [messagesQuery.data]);
   const isBusy = sendMutation.isPending || confirmMutation.isPending || isUploadingVoice;
   const latestAnswer = [...messages].reverse().find(message => message.role === "assistant")?.content;
 
@@ -139,7 +143,7 @@ export default function PastoralChat() {
             </div>
             <div className="rounded-2xl border border-[#e7e1d4] bg-card p-5 shadow-sm">
               <h2 className="font-semibold text-[#173b34]">Voz</h2>
-              <p className="mt-2 text-sm leading-6 text-muted-foreground">Envie uma mensagem de voz. O áudio é interpretado internamente e o agente responde em voz; a resposta do assistente permanece registrada para consulta.</p>
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">Envie uma mensagem de voz. O áudio é interpretado internamente; o histórico mostra a mensagem de voz, sem exibir a transcrição, e registra a resposta do assistente.</p>
               {!voiceSynthesisAvailable ? <p className="mt-3 text-xs leading-5 text-muted-foreground">A síntese de voz não está disponível neste navegador. A resposta continuará disponível no histórico.</p> : null}
               <Button variant="outline" className="mt-4 w-full" onClick={speakLatest} disabled={!latestAnswer || !voiceSynthesisAvailable}>
                 <Volume2 className="mr-2 size-4" /> Ouvir última resposta

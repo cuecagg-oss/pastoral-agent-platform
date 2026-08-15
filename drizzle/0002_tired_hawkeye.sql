@@ -1,0 +1,1 @@
+ALTER TABLE `conversation_messages` ADD `messageType` enum('text','voice') DEFAULT 'text' NOT NULL;

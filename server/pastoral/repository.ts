@@ -127,13 +127,13 @@ export class DatabasePastoralRepository implements PastoralRepository {
     return match ? { id: match.id, name: match.name, followedUp: match.followedUp } : null;
   }
 
-  async appendMessage(input: { conversationId: number; context: TenantContext; role: "user" | "assistant"; content: string; model?: string; tool?: string }) {
+  async appendMessage(input: { conversationId: number; context: TenantContext; role: "user" | "assistant"; content: string; messageType?: "text" | "voice"; model?: string; tool?: string }) {
     const db = await this.db();
     const conversation = await db.select().from(conversations).where(eq(conversations.id, input.conversationId)).limit(1);
     if (!conversation[0]) throw new Error("Conversa não encontrada.");
     assertTenantScope(input.context, conversation[0].organizationId);
     if (conversation[0].userId !== input.context.userId) throw new TenantIsolationError();
-    await db.insert(conversationMessages).values({ conversationId: input.conversationId, organizationId: input.context.organizationId, userId: input.context.userId, role: input.role, content: input.content, model: input.model ?? null, tool: input.tool ?? null });
+    await db.insert(conversationMessages).values({ conversationId: input.conversationId, organizationId: input.context.organizationId, userId: input.context.userId, role: input.role, messageType: input.messageType ?? "text", content: input.content, model: input.model ?? null, tool: input.tool ?? null });
   }
 
   async writeFollowup(input: { context: TenantContext; visitorId: number; note: string; idempotencyKey: string }) {

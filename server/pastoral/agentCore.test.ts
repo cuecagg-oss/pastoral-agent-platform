@@ -2,12 +2,13 @@ import { describe, expect, it } from "vitest";
 import { AgentCore } from "./agentCore";
 import { AuthorizationError } from "./policy";
 import type { PastoralRepository, TenantContext, ToolResult } from "./types";
+import { createVoiceHistoryEntry, VOICE_HISTORY_LABEL } from "./voiceUploadRoute";
 
 const context: TenantContext = { organizationId: 1, organizationName: "Igreja Demonstração A", userId: 1, userName: "Pastor Samuel", role: "pastor" };
 
 class FakeRepository implements PastoralRepository {
   audits: Array<{ action: string; status: string; tool?: string }> = [];
-  messages: Array<{ role: string; content: string }> = [];
+  messages: Array<{ role: string; content: string; messageType?: string }> = [];
   readTools: string[] = [];
   followups = 0;
   private summary(tool: ToolResult["tool"]): ToolResult {
@@ -19,7 +20,7 @@ class FakeRepository implements PastoralRepository {
   queryVisitors() { this.readTools.push("consultar_visitantes"); return Promise.resolve(this.summary("consultar_visitantes")); }
   queryLeaders() { this.readTools.push("consultar_lideres"); return Promise.resolve(this.summary("consultar_lideres")); }
   findVisitor(_context: TenantContext, name: string) { return Promise.resolve(name === "João" ? { id: 21, name: "João", followedUp: false } : null); }
-  appendMessage(input: { role: "user" | "assistant"; content: string }) { this.messages.push(input); return Promise.resolve(); }
+  appendMessage(input: { role: "user" | "assistant"; content: string; messageType?: "text" | "voice" }) { this.messages.push(input); return Promise.resolve(); }
   writeFollowup() { this.followups += 1; return Promise.resolve({ created: this.followups === 1, visitorName: "João" }); }
   audit(input: { action: string; status: "success" | "failure" | "denied"; tool?: string }) { this.audits.push(input); return Promise.resolve(); }
 }
@@ -62,6 +63,20 @@ describe("Agent Core pastoral", () => {
     expect(repository.messages).toHaveLength(1);
     expect(repository.messages[0]).toMatchObject({ role: "assistant" });
     expect(repository.messages.some(message => message.content.includes("Quantas células"))).toBe(false);
+  });
+
+  it("mantém o marcador privado de voz antes da resposta sem persistir a fala reconhecida", async () => {
+    const repository = new FakeRepository();
+    const agent = new AgentCore(repository);
+    const recognizedSpeech = "Quantas células realizaram reunião esta semana?";
+
+    await repository.appendMessage(createVoiceHistoryEntry(4, context));
+    await agent.respond({ context, conversationId: 4, message: recognizedSpeech, persistUserMessage: false });
+
+    expect(repository.messages).toHaveLength(2);
+    expect(repository.messages[0]).toMatchObject({ role: "user", messageType: "voice", content: VOICE_HISTORY_LABEL });
+    expect(repository.messages[1]).toMatchObject({ role: "assistant" });
+    expect(repository.messages.some(message => message.content.includes(recognizedSpeech))).toBe(false);
   });
 
   it("exige confirmação e mantém idempotência da Write Tool", async () => {

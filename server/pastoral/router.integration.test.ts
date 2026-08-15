@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
-import { users } from "../../drizzle/schema";
+import { conversationMessages, users } from "../../drizzle/schema";
 import { getDb } from "../db";
 import { appRouter } from "../routers";
 import type { TrpcContext } from "../_core/context";
@@ -41,8 +41,24 @@ describe("Consultas pastorais autenticadas", () => {
     const conversationA = await callerA.pastoral.currentConversation();
     const db = await getDb();
     if (!db) throw new Error("Banco de teste indisponível.");
+    await db.insert(conversationMessages).values({
+      conversationId: conversationA.id,
+      organizationId: 1,
+      userId: 1,
+      role: "user",
+      messageType: "voice",
+      content: "Mensagem de voz enviada.",
+      model: "voice-input-v1",
+    });
+    const messagesA = await callerA.pastoral.messages({ conversationId: conversationA.id });
+    const demoPastorA = (await db.select().from(users).where(eq(users.openId, "demo-pastor-a")).limit(1))[0];
     const demoPastorB = (await db.select().from(users).where(eq(users.openId, "demo-pastor-b")).limit(1))[0];
+    if (!demoPastorA) throw new Error("Segundo usuário do tenant A não foi semeado.");
     if (!demoPastorB) throw new Error("Usuário do tenant B não foi semeado.");
+    const callerSameChurch = appRouter.createCaller({
+      ...authenticatedContext(),
+      user: { ...authenticatedContext().user!, id: demoPastorA.id, openId: demoPastorA.openId, name: demoPastorA.name, role: "user" },
+    });
     const callerB = appRouter.createCaller({
       ...authenticatedContext(),
       user: { ...authenticatedContext().user!, id: demoPastorB.id, openId: demoPastorB.openId, name: demoPastorB.name, role: "user" },
@@ -51,6 +67,8 @@ describe("Consultas pastorais autenticadas", () => {
 
     expect(dashboardB.tenant.organizationName).toBe("Igreja Demonstração B");
     expect(dashboardB.summary.cells).toBe(1);
+    expect(messagesA).toContainEqual(expect.objectContaining({ role: "user", messageType: "voice", content: "Mensagem de voz enviada." }));
+    await expect(callerSameChurch.pastoral.messages({ conversationId: conversationA.id })).rejects.toMatchObject({ code: "FORBIDDEN" });
     await expect(callerB.pastoral.messages({ conversationId: conversationA.id })).rejects.toMatchObject({ code: "FORBIDDEN" });
   });
 });

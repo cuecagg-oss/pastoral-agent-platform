@@ -15,6 +15,13 @@
       "when": 1786753456016,
       "tag": "0001_typical_virginia_dare",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1786765029601,
+      "tag": "0002_tired_hawkeye",
+      "breakpoints": true
     }
   ]
 }

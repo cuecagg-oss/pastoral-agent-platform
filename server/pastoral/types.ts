@@ -1,4 +1,5 @@
 export type TenantRole = "admin" | "pastor" | "supervisor" | "leader";
+export type ConversationMessageType = "text" | "voice";
 
 export type TenantContext = {
   organizationId: number;
@@ -42,6 +43,7 @@ export interface PastoralRepository {
     context: TenantContext;
     role: "user" | "assistant";
     content: string;
+    messageType?: ConversationMessageType;
     model?: string;
     tool?: string;
   }): Promise<void>;

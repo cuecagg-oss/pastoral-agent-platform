@@ -14,6 +14,7 @@ const REQUEST_WINDOW_MS = 60_000;
 const REQUEST_LIMIT_PER_WINDOW = 5;
 const voiceRequestTimestamps = new Map<number, number[]>();
 const voiceUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 16 * 1024 * 1024 } });
+export const VOICE_HISTORY_LABEL = "Mensagem de voz enviada.";
 
 type VoiceUploadRejection = {
   status: number;
@@ -48,6 +49,17 @@ export function validateVoiceUploadRequest(input: {
   return null;
 }
 
+export function createVoiceHistoryEntry(conversationId: number, context: TenantContext) {
+  return {
+    conversationId,
+    context,
+    role: "user" as const,
+    messageType: "voice" as const,
+    content: VOICE_HISTORY_LABEL,
+    model: "voice-input-v1",
+  };
+}
+
 export async function auditVoiceRejection(repository: Pick<PastoralRepository, "audit">, context: TenantContext, reason: string) {
   await repository.audit({ context, action: "voice.upload", agent: "voice-upload", status: "denied", metadata: { reason } });
 }
@@ -80,6 +92,7 @@ async function uploadAndTranscribe(req: Request, res: Response) {
       repository,
     });
     const conversation = await getOrCreateConversation(context);
+    await repository.appendMessage(createVoiceHistoryEntry(conversation.id, context));
     const agentResponse = await new AgentCore(repository).respond({
       context,
       conversationId: conversation.id,
@@ -93,7 +106,7 @@ async function uploadAndTranscribe(req: Request, res: Response) {
       model: agentResponse.model,
       tool: agentResponse.tool,
       status: "success",
-      metadata: { mimeType, transcriptionProvider: transcript.provider, responseProvider: agentResponse.provider },
+      metadata: { mimeType, messageType: "voice", transcriptionProvider: transcript.provider, responseProvider: agentResponse.provider },
     });
     res.set("Cache-Control", "no-store");
     return res.json({

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { allowVoiceUpload, auditVoiceRejection, normalizeAudioMimeType, validateVoiceUploadRequest } from "./voiceUploadRoute";
+import { allowVoiceUpload, auditVoiceRejection, createVoiceHistoryEntry, normalizeAudioMimeType, validateVoiceUploadRequest, VOICE_HISTORY_LABEL } from "./voiceUploadRoute";
 import type { TenantContext } from "./types";
 
 const context: TenantContext = { organizationId: 1, organizationName: "Igreja Demonstração A", userId: 990_001, userName: "Teste", role: "pastor" };
@@ -32,5 +32,11 @@ describe("rota binária de voz", () => {
     const audit = vi.fn().mockResolvedValue(undefined);
     await auditVoiceRejection({ audit }, context, "payload_too_large");
     expect(audit).toHaveBeenCalledWith(expect.objectContaining({ context, action: "voice.upload", agent: "voice-upload", status: "denied", metadata: { reason: "payload_too_large" } }));
+  });
+
+  it("cria um marcador de voz sem a transcrição reconhecida", () => {
+    const entry = createVoiceHistoryEntry(41, context);
+    expect(entry).toEqual(expect.objectContaining({ conversationId: 41, context, role: "user", messageType: "voice", content: VOICE_HISTORY_LABEL, model: "voice-input-v1" }));
+    expect(entry.content).not.toContain("Quantas células");
   });
 });
