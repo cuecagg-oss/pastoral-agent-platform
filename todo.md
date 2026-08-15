@@ -85,3 +85,26 @@
 - [x] Tornar público, com confirmação explícita do usuário, o repositório correto `cuecagg-oss/pastoral-agent-platform`.
 - [x] Verificar o acesso anônimo ao repositório público e confirmar o branch principal disponível.
 - [x] Registrar a validação manual bem-sucedida de sessão móvel após login, atualização e navegação entre dashboard e Assistente Pastoral.
+- [x] Documentar baseline, métricas, decisões de arquitetura e plano de rollout reversível da evolução aprovada.
+- [x] Criar contratos versionados, configuração por tenant e Agent Gateway com fallback determinístico seguro.
+- [x] Implementar configuração persistida do Agent Gateway por organização, incluindo provider, modelo, habilitação e política de fallback sem segredos.
+- [x] Cobrir a resolução isolada de configuração do Gateway para organizações distintas, sem vazamento de preferências ou dados.
+- [x] Expor somente o estado sanitizado do Gateway por organização nas rotas administrativas, sem URLs, chaves ou tokens.
+- [x] Implementar mutation e repositório para atualizar `organization_agent_settings` por organização com autorização administrativa e auditoria.
+- [x] Adicionar teste de integração que persista configurações distintas para duas organizações e valide a resolução isolada pelo fluxo real.
+- [x] Criar rota administrativa específica do Gateway e testar que o payload retorna somente estado sanitizado, sem URLs, chaves ou tokens.
+- [x] Estruturar o Tool Registry declarativo e implementar as ferramentas piloto autorizadas.
+- [x] Criar catálogo declarativo versionado para as ferramentas pastorais com categoria, papéis autorizados, confirmação, habilitação e descrição segura para exibição.
+- [x] Persistir habilitações somente para ferramentas conhecidas por organização, com alteração administrativa auditada e sem criação arbitrária de ferramentas.
+- [x] Aplicar o catálogo na seleção e execução de ferramentas, recusando ferramentas desabilitadas ou papéis não autorizados com auditoria apropriada.
+- [x] Expor o catálogo sanitizado por procedimento autenticado, sem lógica de execução, chaves, URLs ou possibilidade de criar ferramentas arbitrárias.
+- [x] Cobrir em testes a autorização, a recusa de ferramenta desabilitada, a sanitização do catálogo e o isolamento multi-tenant do fluxo real.
+- [ ] Validar a terceira fase com testes, build de produção, reinício do serviço de desenvolvimento e sincronização do repositório público.
+- [ ] Evoluir confirmações idempotentes e auditoria com requestId, tool, provedor/modelo, resultado e status de confirmação.
+- [ ] Preparar Hermes com estado sanitizado, circuit breaker, retries controlados e fallback local.
+- [ ] Preparar conector n8n desativado por padrão, com allowlist e sem URLs arbitrárias.
+- [ ] Criar serviço do Dashboard para métricas, tendências, pendências e insights estritamente isolados por tenant e papel.
+- [ ] Evoluir o Dashboard preservando a visão gerencial e acrescentando camada inteligente com estados de fallback.
+- [ ] Criar área administrativa de Configurações por papel para organização, usuários, IA, Hermes, voz, ferramentas, integrações e auditoria.
+- [ ] Cobrir segurança, isolamento, fallback, confirmação, Dashboard e Configurações com testes e verificação visual responsiva.
+- [ ] Atualizar documentação, salvar checkpoint, sincronizar o GitHub e entregar a evolução publicada.

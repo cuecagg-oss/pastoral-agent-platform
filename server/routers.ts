@@ -4,10 +4,17 @@ import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import { AgentCore } from "./pastoral/agentCore";
+import { AgentGateway } from "./pastoral/agentGateway";
+import { getAgentGatewayStatus } from "./pastoral/gatewayConfig";
+import { getTenantGatewayConfig, toSanitizedTenantGatewayStatus, updateTenantGatewayConfig } from "./pastoral/tenantGatewayConfig";
+import { listSanitizedToolCatalog } from "./pastoral/toolCatalog";
+import { getTenantToolCatalog, updateTenantToolStatus } from "./pastoral/tenantToolConfig";
+import { pastoralToolNames } from "./pastoral/types";
 import { DatabasePastoralRepository, dashboardSummary, getOrCreateConversation, getTenantContextForUser, listMessages } from "./pastoral/repository";
 
 const repository = new DatabasePastoralRepository();
 const agentCore = new AgentCore(repository);
+const agentGateway = new AgentGateway(repository, agentCore);
 
 async function currentTenant(userId: number) {
   return getTenantContextForUser(userId);
@@ -30,7 +37,50 @@ export const appRouter = router({
     dashboard: protectedProcedure.query(async ({ ctx }) => {
       const tenant = await currentTenant(ctx.user.id);
       const summary = await dashboardSummary(tenant);
-      return { tenant, summary, agent: { status: "online", provider: process.env.AGENT_PROVIDER ?? "deterministic" } };
+      return { tenant, summary, agent: toSanitizedTenantGatewayStatus(await getTenantGatewayConfig(tenant)) };
+    }),
+    agentSettings: protectedProcedure.query(async ({ ctx }) => {
+      const tenant = await currentTenant(ctx.user.id);
+      return toSanitizedTenantGatewayStatus(await getTenantGatewayConfig(tenant));
+    }),
+    toolCatalog: protectedProcedure.query(async ({ ctx }) => {
+      const tenant = await currentTenant(ctx.user.id);
+      return listSanitizedToolCatalog(tenant, await getTenantToolCatalog(tenant));
+    }),
+    updateToolStatus: protectedProcedure.input(z.object({
+      name: z.enum(pastoralToolNames),
+      enabled: z.boolean(),
+    })).mutation(async ({ ctx, input }) => {
+      const tenant = await currentTenant(ctx.user.id);
+      const catalog = await updateTenantToolStatus(tenant, input);
+      await repository.audit({
+        context: tenant,
+        action: "agent_tool.settings.update",
+        agent: "admin-settings",
+        tool: input.name,
+        status: "success",
+        metadata: { enabled: input.enabled },
+      });
+      return listSanitizedToolCatalog(tenant, catalog);
+    }),
+    updateAgentSettings: protectedProcedure.input(z.object({
+      enabled: z.boolean(),
+      provider: z.enum(["legacy", "hermes"]),
+      model: z.string().trim().min(1).max(160),
+      fallbackPolicy: z.literal("deterministic"),
+    })).mutation(async ({ ctx, input }) => {
+      const tenant = await currentTenant(ctx.user.id);
+      const config = await updateTenantGatewayConfig(tenant, input);
+      await repository.audit({
+        context: tenant,
+        action: "agent_gateway.settings.update",
+        agent: "admin-settings",
+        model: config.model,
+        tool: "agent_gateway_config",
+        status: "success",
+        metadata: { enabled: config.enabled, provider: config.provider, fallbackPolicy: config.fallbackPolicy },
+      });
+      return toSanitizedTenantGatewayStatus(config);
     }),
     currentConversation: protectedProcedure.query(async ({ ctx }) => {
       const tenant = await currentTenant(ctx.user.id);
@@ -42,11 +92,11 @@ export const appRouter = router({
     }),
     sendMessage: protectedProcedure.input(z.object({ conversationId: z.number().int().positive(), content: z.string().trim().min(1).max(4000) })).mutation(async ({ ctx, input }) => {
       const tenant = await currentTenant(ctx.user.id);
-      return agentCore.respond({ context: tenant, conversationId: input.conversationId, message: input.content });
+      return agentGateway.respond({ context: tenant, conversationId: input.conversationId, message: input.content });
     }),
     confirmFollowup: protectedProcedure.input(z.object({ conversationId: z.number().int().positive(), visitorId: z.number().int().positive(), note: z.string().min(1).max(2000), idempotencyKey: z.string().uuid() })).mutation(async ({ ctx, input }) => {
       const tenant = await currentTenant(ctx.user.id);
-      return agentCore.confirmFollowup({ context: tenant, ...input });
+      return agentGateway.confirmFollowup({ context: tenant, ...input });
     }),
   }),
 });

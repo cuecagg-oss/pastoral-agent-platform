@@ -30,6 +30,36 @@ export const organizations = mysqlTable("organizations", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
+export const organizationAgentSettings = mysqlTable(
+  "organization_agent_settings",
+  {
+    organizationId: int("organizationId").primaryKey(),
+    enabled: boolean("enabled").default(true).notNull(),
+    provider: mysqlEnum("provider", ["legacy", "hermes"]).default("legacy").notNull(),
+    model: varchar("model", { length: 120 }).default("legacy-router").notNull(),
+    fallbackPolicy: mysqlEnum("fallbackPolicy", ["deterministic"]).default("deterministic").notNull(),
+    updatedByUserId: int("updatedByUserId"),
+    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  },
+  table => [index("agent_settings_updated_idx").on(table.updatedAt)],
+);
+
+export const organizationToolSettings = mysqlTable(
+  "organization_tool_settings",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    organizationId: int("organizationId").notNull(),
+    toolName: varchar("toolName", { length: 120 }).notNull(),
+    enabled: boolean("enabled").default(true).notNull(),
+    updatedByUserId: int("updatedByUserId").notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  },
+  table => [
+    uniqueIndex("organization_tool_settings_org_tool_unique").on(table.organizationId, table.toolName),
+    index("organization_tool_settings_updated_idx").on(table.organizationId, table.updatedAt),
+  ],
+);
+
 export const organizationMemberships = mysqlTable(
   "organization_memberships",
   {

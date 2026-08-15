@@ -9,7 +9,7 @@ export type TenantContext = {
   role: TenantRole;
 };
 
-export const pastoralToolNames = [
+export const readPastoralToolNames = [
   "consultar_celulas",
   "consultar_relatorios",
   "consultar_presenca",
@@ -17,10 +17,28 @@ export const pastoralToolNames = [
   "consultar_lideres",
 ] as const;
 
+export type ReadPastoralToolName = (typeof readPastoralToolNames)[number];
+
+export const pastoralToolNames = [
+  ...readPastoralToolNames,
+  "registrar_acompanhamento_visitante",
+] as const;
+
 export type PastoralToolName = (typeof pastoralToolNames)[number];
 
+export type ToolCategory = "READ" | "WRITE" | "SENSITIVE";
+
+export type ToolCatalogEntry = {
+  name: PastoralToolName;
+  category: ToolCategory;
+  authorizedRoles: readonly TenantRole[];
+  requiresConfirmation: boolean;
+  enabled: boolean;
+  description: string;
+};
+
 export type ToolResult = {
-  tool: PastoralToolName;
+  tool: ReadPastoralToolName;
   summary: string;
   data: Record<string, unknown>;
 };
@@ -69,6 +87,13 @@ export type AgentResponse = {
   model: string;
   provider: string;
   tool?: string;
+  requestId?: string;
+  gateway?: {
+    version: "v1";
+    provider: "legacy" | "hermes";
+    fallback: boolean;
+    fallbackReason?: "gateway_disabled" | "hermes_unavailable";
+  };
   confirmation?: {
     visitorId: number;
     visitorName: string;

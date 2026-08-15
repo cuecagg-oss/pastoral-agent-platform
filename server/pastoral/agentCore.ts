@@ -1,8 +1,10 @@
 import { randomUUID } from "node:crypto";
 import { ModelRouter } from "./modelRouter";
-import { assertFollowupPermission } from "./policy";
+import { assertToolExecutionPermission, ToolUnavailableError } from "./policy";
+import { getToolCatalogEntry } from "./toolCatalog";
+import { getTenantToolCatalog } from "./tenantToolConfig";
 import { chooseReadTool, executeReadTool, extractVisitorName, isFollowupIntent, isOrganizationCountIntent } from "./toolRegistry";
-import type { AgentResponse, PastoralRepository, TenantContext } from "./types";
+import type { AgentResponse, PastoralRepository, TenantContext, ToolCatalogEntry } from "./types";
 
 const AGENT_NAME = "assistente-pastoral";
 
@@ -10,6 +12,7 @@ export class AgentCore {
   constructor(
     private readonly repository: PastoralRepository,
     private readonly modelRouter = new ModelRouter(),
+    private readonly resolveToolCatalog: (context: TenantContext) => Promise<readonly ToolCatalogEntry[]> = getTenantToolCatalog,
   ) {}
 
   async respond(input: { context: TenantContext; conversationId: number; message: string; persistUserMessage?: boolean }): Promise<AgentResponse> {
@@ -20,9 +23,17 @@ export class AgentCore {
 
     if (isFollowupIntent(message)) {
       try {
-        assertFollowupPermission(context);
+        const toolCatalog = await this.resolveToolCatalog(context);
+        assertToolExecutionPermission(context, getToolCatalogEntry("registrar_acompanhamento_visitante", toolCatalog));
       } catch (error) {
-        await this.repository.audit({ context, action: "followup.prepare", agent: AGENT_NAME, tool: "registrar_acompanhamento_visitante", status: "denied", metadata: { reason: "role_not_allowed" } });
+        await this.repository.audit({
+          context,
+          action: "followup.prepare",
+          agent: AGENT_NAME,
+          tool: "registrar_acompanhamento_visitante",
+          status: "denied",
+          metadata: { reason: error instanceof ToolUnavailableError ? "tool_disabled" : "role_not_allowed" },
+        });
         throw error;
       }
       const visitorName = extractVisitorName(message);
@@ -62,7 +73,21 @@ export class AgentCore {
     }
 
     const tool = chooseReadTool(message);
-    const toolResult = await executeReadTool(this.repository, context, tool);
+    let toolResult;
+    try {
+      const toolCatalog = await this.resolveToolCatalog(context);
+      toolResult = await executeReadTool(this.repository, context, tool, toolCatalog);
+    } catch (error) {
+      await this.repository.audit({
+        context,
+        action: "agent.tool.execute",
+        agent: AGENT_NAME,
+        tool,
+        status: "denied",
+        metadata: { reason: error instanceof ToolUnavailableError ? "tool_disabled" : "role_not_allowed" },
+      });
+      throw error;
+    }
     const model = await this.modelRouter.generate({
       system: "Você é um assistente pastoral. Responda em português, de forma objetiva, usando exclusivamente a evidência fornecida. Não invente dados, não exponha dados de outra organização e não revele raciocínio interno.",
       user: `Pergunta: ${message}\n\nEvidência da ferramenta ${tool}: ${JSON.stringify(toolResult.data)}`,
@@ -76,9 +101,17 @@ export class AgentCore {
 
   async confirmFollowup(input: { context: TenantContext; conversationId: number; visitorId: number; note: string; idempotencyKey: string }): Promise<AgentResponse> {
     try {
-      assertFollowupPermission(input.context);
+      const toolCatalog = await this.resolveToolCatalog(input.context);
+      assertToolExecutionPermission(input.context, getToolCatalogEntry("registrar_acompanhamento_visitante", toolCatalog));
     } catch (error) {
-      await this.repository.audit({ context: input.context, action: "followup.confirm", agent: AGENT_NAME, tool: "registrar_acompanhamento_visitante", status: "denied", metadata: { reason: "role_not_allowed" } });
+      await this.repository.audit({
+        context: input.context,
+        action: "followup.confirm",
+        agent: AGENT_NAME,
+        tool: "registrar_acompanhamento_visitante",
+        status: "denied",
+        metadata: { reason: error instanceof ToolUnavailableError ? "tool_disabled" : "role_not_allowed" },
+      });
       throw error;
     }
     const result = await this.repository.writeFollowup(input);

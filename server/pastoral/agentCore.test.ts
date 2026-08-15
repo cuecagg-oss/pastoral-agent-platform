@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { AgentCore } from "./agentCore";
-import { AuthorizationError } from "./policy";
-import type { PastoralRepository, TenantContext, ToolResult } from "./types";
+import { AuthorizationError, ToolUnavailableError } from "./policy";
+import { pastoralToolCatalog } from "./toolCatalog";
+import type { PastoralRepository, TenantContext, ToolCatalogEntry, ToolResult } from "./types";
 import { createVoiceHistoryEntry, VOICE_HISTORY_LABEL } from "./voiceUploadRoute";
 
 const context: TenantContext = { organizationId: 1, organizationName: "Igreja Demonstração A", userId: 1, userName: "Pastor Samuel", role: "pastor" };
@@ -97,5 +98,28 @@ describe("Agent Core pastoral", () => {
     const agent = new AgentCore(repository);
     await expect(agent.respond({ context: { ...context, role: "leader" }, conversationId: 4, message: "Registre que o pastor entrou em contato com João hoje." })).rejects.toThrow(AuthorizationError);
     expect(repository.audits).toContainEqual(expect.objectContaining({ action: "followup.prepare", status: "denied" }));
+  });
+
+  it("recusa ferramenta desabilitada antes de consultar dados e audita a decisão", async () => {
+    const repository = new FakeRepository();
+    const disabledCatalog: ToolCatalogEntry[] = pastoralToolCatalog.map(entry => (
+      entry.name === "consultar_celulas" ? { ...entry, enabled: false } : entry
+    ));
+    const agent = new AgentCore(repository, undefined, async () => disabledCatalog);
+
+    await expect(agent.respond({ context, conversationId: 4, message: "Como estão as células desta semana?" })).rejects.toThrow(ToolUnavailableError);
+
+    expect(repository.readTools).toEqual([]);
+    expect(repository.audits).toContainEqual(expect.objectContaining({ action: "agent.tool.execute", status: "denied", tool: "consultar_celulas" }));
+  });
+
+  it("recusa consulta sensível a papel não autorizado antes de acessar o repositório", async () => {
+    const repository = new FakeRepository();
+    const agent = new AgentCore(repository);
+
+    await expect(agent.respond({ context: { ...context, role: "leader" }, conversationId: 4, message: "Quais visitantes precisam de acompanhamento?" })).rejects.toThrow(AuthorizationError);
+
+    expect(repository.readTools).toEqual([]);
+    expect(repository.audits).toContainEqual(expect.objectContaining({ action: "agent.tool.execute", status: "denied", tool: "consultar_visitantes" }));
   });
 });

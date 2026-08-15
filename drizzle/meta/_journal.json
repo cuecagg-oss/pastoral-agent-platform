@@ -22,6 +22,20 @@
       "when": 1786765029601,
       "tag": "0002_tired_hawkeye",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1786771648273,
+      "tag": "0003_previous_lake",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1786772283028,
+      "tag": "0004_organization_tool_settings",
+      "breakpoints": true
     }
   ]
 }

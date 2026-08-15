@@ -7,4 +7,12 @@ export const ENV = {
   isProduction: process.env.NODE_ENV === "production",
   forgeApiUrl: process.env.BUILT_IN_FORGE_API_URL ?? "",
   forgeApiKey: process.env.BUILT_IN_FORGE_API_KEY ?? "",
+  agentGatewayEnabled: process.env.AGENT_GATEWAY_ENABLED ?? "true",
+  agentGatewayProvider: process.env.AGENT_GATEWAY_PROVIDER ?? "legacy",
+  agentGatewayModel: process.env.AGENT_GATEWAY_MODEL ?? "",
+  hermesEnabled: process.env.HERMES_ENABLED ?? "false",
+  hermesModel: process.env.HERMES_MODEL ?? "",
+  hermesBaseUrl: process.env.HERMES_BASE_URL ?? "",
+  hermesApiKey: process.env.HERMES_API_KEY ?? "",
+  hermesTimeoutMs: process.env.HERMES_TIMEOUT_MS ?? "4500",
 };

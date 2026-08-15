@@ -1,4 +1,6 @@
-import type { PastoralRepository, PastoralToolName, TenantContext, ToolResult } from "./types";
+import { assertToolExecutionPermission } from "./policy";
+import { getToolCatalogEntry, pastoralToolCatalog } from "./toolCatalog";
+import type { PastoralRepository, ReadPastoralToolName, TenantContext, ToolCatalogEntry, ToolResult } from "./types";
 
 const normalized = (value: string) => value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 
@@ -13,7 +15,7 @@ export function isOrganizationCountIntent(message: string) {
   return asksForCount && mentionsOrganization && !mentionsPastoralMetric;
 }
 
-export function chooseReadTool(message: string): PastoralToolName {
+export function chooseReadTool(message: string): ReadPastoralToolName {
   const input = normalized(message);
   if (input.includes("relatorio") || input.includes("entregaram")) return "consultar_relatorios";
   if (input.includes("presenca") || input.includes("reuniao") || input.includes("realizaram")) return "consultar_presenca";
@@ -35,8 +37,10 @@ export function extractVisitorName(message: string) {
 export async function executeReadTool(
   repository: PastoralRepository,
   context: TenantContext,
-  tool: PastoralToolName,
+  tool: ReadPastoralToolName,
+  catalog: readonly ToolCatalogEntry[] = pastoralToolCatalog,
 ): Promise<ToolResult> {
+  assertToolExecutionPermission(context, getToolCatalogEntry(tool, catalog));
   switch (tool) {
     case "consultar_celulas":
       return repository.queryCells(context);
