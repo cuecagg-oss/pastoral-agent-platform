@@ -115,6 +115,8 @@ describe("Consultas pastorais autenticadas", () => {
       set: { enabled: false, provider: "hermes", model: "tenant-b-isolated-model", fallbackPolicy: "deterministic", updatedByUserId: demoPastorB.id, updatedAt: new Date() },
     });
 
+    await db.update(organizationMemberships).set({ role: "admin" }).where(eq(organizationMemberships.userId, demoPastorB.id));
+
     const resolvedA = await adminCaller.pastoral.agentSettings();
     const resolvedB = await callerB.pastoral.agentSettings();
     const audits = await db.select().from(auditLogs).where(eq(auditLogs.action, "agent_gateway.settings.update"));
@@ -124,6 +126,7 @@ describe("Consultas pastorais autenticadas", () => {
     expect(resolvedB).toMatchObject({ status: "disabled", provider: "hermes", model: "tenant-b-isolated-model", source: "organization" });
     expect(JSON.stringify(resolvedA)).not.toMatch(/key|token|url/i);
     expect(audits.some(entry => entry.organizationId === 1 && entry.userId === 1)).toBe(true);
+    await db.update(organizationMemberships).set({ role: "pastor" }).where(eq(organizationMemberships.userId, demoPastorB.id));
     await expect(callerB.pastoral.updateAgentSettings({ enabled: true, provider: "legacy", model: "denied-model", fallbackPolicy: "deterministic" })).rejects.toMatchObject({ code: "FORBIDDEN" });
   });
 
@@ -171,6 +174,8 @@ describe("Consultas pastorais autenticadas", () => {
     });
 
     const updatedA = await adminCaller.pastoral.updateToolStatus({ name: "consultar_celulas", enabled: false });
+    await expect(callerB.pastoral.toolCatalog()).rejects.toMatchObject({ code: "FORBIDDEN" });
+    await db.update(organizationMemberships).set({ role: "admin" }).where(eq(organizationMemberships.userId, demoPastorB.id));
     const catalogB = await callerB.pastoral.toolCatalog();
     const setting = (await db.select().from(organizationToolSettings).where(eq(organizationToolSettings.organizationId, 1)).limit(1))[0];
     const audits = await db.select().from(auditLogs).where(eq(auditLogs.action, "agent_tool.settings.update"));
@@ -179,7 +184,35 @@ describe("Consultas pastorais autenticadas", () => {
     expect(catalogB).toContainEqual(expect.objectContaining({ name: "consultar_celulas", enabled: true }));
     expect(setting).toMatchObject({ organizationId: 1, toolName: "consultar_celulas", enabled: false, updatedByUserId: 1 });
     expect(audits.some(entry => entry.organizationId === 1 && entry.userId === 1 && entry.tool === "consultar_celulas")).toBe(true);
+    await db.update(organizationMemberships).set({ role: "pastor" }).where(eq(organizationMemberships.userId, demoPastorB.id));
     await expect(callerB.pastoral.updateToolStatus({ name: "consultar_celulas", enabled: false })).rejects.toMatchObject({ code: "FORBIDDEN" });
+  });
+
+  it("expõe a visão administrativa sanitizada apenas ao admin da própria organização", async () => {
+    const db = await getDb();
+    if (!db) throw new Error("Banco de teste indisponível.");
+    await db.update(organizationMemberships).set({ role: "admin" }).where(eq(organizationMemberships.userId, 1));
+    const adminCaller = appRouter.createCaller(authenticatedContext());
+    const demoPastorB = (await db.select().from(users).where(eq(users.openId, "demo-pastor-b")).limit(1))[0];
+    if (!demoPastorB) throw new Error("Usuário do tenant B não foi semeado.");
+    await db.update(organizationMemberships).set({ role: "pastor" }).where(eq(organizationMemberships.userId, demoPastorB.id));
+    const callerB = appRouter.createCaller({
+      ...authenticatedContext(),
+      user: { ...authenticatedContext().user!, id: demoPastorB.id, openId: demoPastorB.openId, name: demoPastorB.name, role: "user" },
+    });
+
+    const access = await adminCaller.pastoral.settingsAccess();
+    const overview = await adminCaller.pastoral.settingsOverview();
+    const restrictedAccess = await callerB.pastoral.settingsAccess();
+
+    expect(access).toEqual({ allowed: true, role: "admin" });
+    expect(overview.organization).toMatchObject({ name: "Igreja Demonstração A", role: "admin" });
+    expect(overview.users.length).toBeGreaterThan(0);
+    expect(overview.voice).toMatchObject({ provider: "Transcrição integrada" });
+    expect(JSON.stringify(overview)).not.toMatch(/api.?key|base.?url|token|secret|metadata/i);
+    expect(restrictedAccess).toEqual({ allowed: false, role: "pastor" });
+    await expect(callerB.pastoral.settingsOverview()).rejects.toMatchObject({ code: "FORBIDDEN" });
+    await expect(callerB.pastoral.agentSettings()).rejects.toMatchObject({ code: "FORBIDDEN" });
   });
 
   it("persiste requestId, provedor, resultado e confirmação na auditoria sem cruzar organizações", async () => {

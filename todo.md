@@ -127,6 +127,11 @@
 - [x] Exibir métricas pastorais, tendências e pendências com rótulos de período ou escopo, estados de carregamento, vazio e erro acessíveis.
 - [x] Criar painel de camada inteligente para insights determinísticos e indicar explicitamente a indisponibilidade de insights generativos sem simular conteúdo de IA.
 - [x] Cobrir a experiência do Dashboard em testes de apresentação e verificação visual desktop e celular.
-- [ ] Criar área administrativa de Configurações por papel para organização, usuários, IA, Hermes, voz, ferramentas, integrações e auditoria.
+- [x] Criar área administrativa de Configurações por papel para organização, usuários, IA, Hermes, voz, ferramentas, integrações e auditoria.
+- [x] Criar rota e navegação de Configurações integrada ao layout administrativo, com bloqueio visual e de servidor para papéis não administrativos.
+- [x] Exibir abas Geral, Usuários e permissões, Assistente IA, Hermes, Voz, Ferramentas, Integrações e Auditoria sem expor segredos, URLs internas ou controles não autorizados.
+- [x] Permitir somente ajustes administrativos já suportados: preferência do Agent Gateway e habilitação de ferramentas declaradas por organização, com confirmação de alteração e atualização otimista segura.
+- [x] Exibir estados sanitizados e somente leitura para Hermes, n8n, voz, usuários, auditoria e catálogo de ferramentas, sem criação arbitrária de tools ou workflows.
+- [x] Cobrir autorização, contratos sanitizados, mutações permitidas e navegação responsiva em testes e verificação visual.
 - [ ] Cobrir segurança, isolamento, fallback, confirmação, Dashboard e Configurações com testes e verificação visual responsiva.
 - [ ] Atualizar documentação, salvar checkpoint, sincronizar o GitHub e entregar a evolução publicada.

@@ -5,6 +5,7 @@ import { systemRouter } from "./_core/systemRouter";
 import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import { AgentCore } from "./pastoral/agentCore";
 import { AgentGateway } from "./pastoral/agentGateway";
+import { getAdminSettingsOverview } from "./pastoral/adminSettings";
 import { getN8nConnectorStatus } from "./pastoral/n8nConnector";
 import { assertAdministrativePermission, assertDashboardPermission } from "./pastoral/policy";
 import { getTenantGatewayConfig, toSanitizedTenantGatewayStatus, updateTenantGatewayConfig } from "./pastoral/tenantGatewayConfig";
@@ -43,10 +44,12 @@ export const appRouter = router({
     }),
     agentSettings: protectedProcedure.query(async ({ ctx }) => {
       const tenant = await currentTenant(ctx.user.id);
+      assertAdministrativePermission(tenant);
       return agentGateway.getStatus(tenant);
     }),
     toolCatalog: protectedProcedure.query(async ({ ctx }) => {
       const tenant = await currentTenant(ctx.user.id);
+      assertAdministrativePermission(tenant);
       return listSanitizedToolCatalog(tenant, await getTenantToolCatalog(tenant));
     }),
     updateToolStatus: protectedProcedure.input(z.object({
@@ -54,6 +57,7 @@ export const appRouter = router({
       enabled: z.boolean(),
     })).mutation(async ({ ctx, input }) => {
       const tenant = await currentTenant(ctx.user.id);
+      assertAdministrativePermission(tenant);
       const catalog = await updateTenantToolStatus(tenant, input);
       await repository.audit({
         context: tenant,
@@ -72,6 +76,7 @@ export const appRouter = router({
       fallbackPolicy: z.literal("deterministic"),
     })).mutation(async ({ ctx, input }) => {
       const tenant = await currentTenant(ctx.user.id);
+      assertAdministrativePermission(tenant);
       const config = await updateTenantGatewayConfig(tenant, input);
       await repository.audit({
         context: tenant,
@@ -83,6 +88,14 @@ export const appRouter = router({
         metadata: { enabled: config.enabled, provider: config.provider, fallbackPolicy: config.fallbackPolicy },
       });
       return toSanitizedTenantGatewayStatus(config);
+    }),
+    settingsAccess: protectedProcedure.query(async ({ ctx }) => {
+      const tenant = await currentTenant(ctx.user.id);
+      return { allowed: tenant.role === "admin", role: tenant.role } as const;
+    }),
+    settingsOverview: protectedProcedure.query(async ({ ctx }) => {
+      const tenant = await currentTenant(ctx.user.id);
+      return getAdminSettingsOverview(tenant);
     }),
     currentConversation: protectedProcedure.query(async ({ ctx }) => {
       const tenant = await currentTenant(ctx.user.id);
