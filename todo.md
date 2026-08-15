@@ -30,8 +30,8 @@
 - [x] Mapear `audio/mp4` de navegadores móveis para extensão `.m4a` compatível com a transcrição e cobrir o mapeamento em teste.
 - [x] Validar em dispositivo móvel autenticado a gravação e transcrição após o mapeamento `audio/mp4` para `.m4a`.
 - [x] Se a transcrição móvel ainda falhar, instrumentar e corrigir o feedback específico de MIME, codec ou provedor exibido ao usuário.
-- [ ] Confirmar em dispositivo móvel autenticado que a correção da sessão Manus OAuth persiste após callback, atualização e navegação entre dashboard e chat.
-- [ ] Se a sessão móvel ainda falhar, instrumentar callback e autenticação para distinguir cookie bloqueado, cookie ausente pós-callback e navegador incompatível, exibindo orientação acionável.
+- [x] Confirmar em dispositivo móvel autenticado que a correção da sessão Manus OAuth persiste após callback, atualização e navegação entre dashboard e chat.
+- [x] Se a sessão móvel ainda falhar, instrumentar callback e autenticação para distinguir cookie bloqueado, cookie ausente pós-callback e navegador incompatível, exibindo orientação acionável.
 - [x] Adicionar e validar um estado vazio explícito no dashboard para uma igreja sem registros pastorais.
 - [x] Diagnosticar e corrigir a falha no envio de mensagem de voz reportada em celular, incluindo feedback acionável para permissões, upload e transcrição.
 - [x] Comparar requisitos funcionais e de segurança com o schema, procedimentos, interface e documentação do MVP.
@@ -84,3 +84,4 @@
 - [x] Comparar em modo leitura a organização `cuecagg-oss`, a lista de repositórios acessíveis e a identidade do projeto Assistente Pastoral antes de alterar a visibilidade.
 - [x] Tornar público, com confirmação explícita do usuário, o repositório correto `cuecagg-oss/pastoral-agent-platform`.
 - [x] Verificar o acesso anônimo ao repositório público e confirmar o branch principal disponível.
+- [x] Registrar a validação manual bem-sucedida de sessão móvel após login, atualização e navegação entre dashboard e Assistente Pastoral.
