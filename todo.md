@@ -208,5 +208,5 @@
 - [x] Bug crítico do chat — Cobrir a regressão de envio, resposta, persistência e estado visual, validar em produção e sincronizar a correção.
 - [x] Monitor sintético do chat — Definir checagem periódica isolada, critérios de resposta válida e persistência sanitizada de saúde.
 - [x] Monitor sintético do chat — Implementar endpoint autenticado de execução agendada, idempotência, telemetria e controles operacionais.
-- [ ] Monitor sintético do chat — Cobrir sucesso, resposta inválida, falha, autenticação de cron e isolamento em testes automatizados.
-- [ ] Monitor sintético do chat — Publicar, ativar a rotina periódica, validar execução real e sincronizar a versão final.
+- [x] Monitor sintético do chat — Cobrir sucesso, resposta inválida, falha, autenticação de cron e isolamento em testes automatizados.
+- [x] Monitor sintético do chat — Publicar, ativar a rotina periódica, validar execução real e sincronizar a versão final.
