@@ -214,7 +214,10 @@ export function createSyntheticChatMonitorHandler(dependencies: {
       res.json(summary ? { ok: true, ...summary } : { ok: true, skipped: "orphan_or_disabled" });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "synthetic_monitor_failed";
-      console.error("[ChatSyntheticMonitor]", errorMessage);
+      const relevantHeaders = Object.keys(req.headers)
+        .filter(header => header === "cookie" || header === "authorization" || header.startsWith("x-manus-"))
+        .sort();
+      console.error("[ChatSyntheticMonitor]", { error: errorMessage, relevantHeaders });
       res.status(500).json({ error: "synthetic_monitor_failed", context: { route: "chat-synthetic-monitor" }, timestamp: new Date().toISOString() });
     }
   };
