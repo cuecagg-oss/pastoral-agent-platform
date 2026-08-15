@@ -31,6 +31,7 @@ export async function getAdminSettingsOverview(context: TenantContext) {
       .where(eq(organizationMemberships.organizationId, context.organizationId))
       .orderBy(organizationMemberships.createdAt),
     db.select({
+      id: auditLogs.id,
       actorName: users.name,
       action: auditLogs.action,
       agent: auditLogs.agent,
@@ -70,6 +71,7 @@ export async function getAdminSettingsOverview(context: TenantContext) {
       transcriptionVisibility: "A transcrição é processada internamente e não aparece no histórico.",
     },
     auditEvents: auditEvents.map(event => ({
+      eventKey: `audit-${event.id}`,
       actorName: event.actorName ?? "Usuário removido",
       action: event.action,
       agent: event.agent,

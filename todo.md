@@ -142,3 +142,17 @@
 - [x] Atualizar baseline, decisões, roadmap e backlog com as fases concluídas, contratos implementados, salvaguardas e limites operacionais atuais.
 - [x] Registrar o resultado final de validação, versão publicada e instruções operacionais sem expor segredos ou endpoints internos.
 - [x] Sincronizar a versão final no repositório público e confirmar a disponibilidade do branch principal.
+
+## Ciclo THÁNOS Agent Hub
+
+- [x] Fase A — Congelar os contratos de chat, voz, confirmação, catálogo, configurações, Dashboard e auditoria em uma matriz de compatibilidade.
+- [x] Fase A — Adicionar testes de caracterização para contexto, isolamento, autorização e respostas do Assistente Pastoral antes da extração.
+- [x] Fase A — Formalizar e testar as invariantes server-side entre `workspaceKey`, `tenantId` e `domain`, sem alterar contratos externos.
+- [x] Fase A — Validar regressão, build, auditoria de código pendente e documentação antes de extrair o contexto genérico.
+- [x] Fase A — Corrigir chave duplicada na lista de auditoria administrativa e cobrir sua identidade estável em teste de apresentação.
+- [ ] Fase B — Criar contexto THÁNOS e registros de workspace e skill com adaptadores compatíveis.
+- [ ] Fase C — Extrair infraestrutura central com adaptadores compatíveis e rollback por fachada.
+- [ ] Fase D — Converter o Pastoral em workspace, skill e ferramentas declaradas.
+- [ ] Fase E — Implementar e validar piloto multi-step somente leitura com no máximo três ferramentas autorizadas.
+- [ ] Fase F — Validar integralmente, documentar e estabilizar a arquitetura THÁNOS.
+- [ ] Publicar e entregar o ciclo THÁNOS no repositório público.

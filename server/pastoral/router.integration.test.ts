@@ -209,6 +209,8 @@ describe("Consultas pastorais autenticadas", () => {
     expect(overview.organization).toMatchObject({ name: "Igreja Demonstração A", role: "admin" });
     expect(overview.users.length).toBeGreaterThan(0);
     expect(overview.voice).toMatchObject({ provider: "Transcrição integrada" });
+    expect(overview.auditEvents.every(event => /^audit-\d+$/.test(event.eventKey))).toBe(true);
+    expect(new Set(overview.auditEvents.map(event => event.eventKey)).size).toBe(overview.auditEvents.length);
     expect(JSON.stringify(overview)).not.toMatch(/api.?key|base.?url|token|secret|metadata/i);
     expect(restrictedAccess).toEqual({ allowed: false, role: "pastor" });
     await expect(callerB.pastoral.settingsOverview()).rejects.toMatchObject({ code: "FORBIDDEN" });
