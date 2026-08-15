@@ -63,3 +63,5 @@
 - [x] Adicionar tratamento robusto de TTS no cliente com callbacks de início e erro, além de tempo máximo para confirmar reprodução real antes de anunciar sucesso.
 - [x] Implementar fallback de voz seguro para navegadores sem síntese, desabilitando a reprodução e preservando a resposta textual no histórico.
 - [x] Cobrir em teste o início confirmado e o caminho de falha da reprodução automática de voz.
+- [x] Comparar formalmente a implementação atual com o prompt mestre e apresentar uma matriz de aderência, lacunas e prioridades.
+- [x] Avaliar a resposta a “quantas igrejas temos” quanto a segurança multi-tenant, clareza de produto e registro da interação por voz.
