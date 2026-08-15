@@ -198,3 +198,4 @@
 - [x] Fechamento THÁNOS — Documentar a evidência sanitizada, revalidar a aplicação, criar checkpoint e sincronizar o branch principal sem force push.
 - [ ] Validação operacional real — Conectar uma sessão autenticada do usuário ou registrar o bloqueio OAuth sem substituir a prova por testes automatizados.
 - [ ] Validação operacional real — Diagnosticar e corrigir a discrepância entre o kill switch publicado e a decisão THÁNOS observada na auditoria, antes de alegar rollback real.
+- [ ] Validação operacional real — Confirmar a configuração restaurada pelo parser de IDs, sem solicitar nova alteração de secrets ou audiência.

@@ -18,13 +18,16 @@ Após a recarga de publicação, a sessão autenticada permaneceu ativa e uma no
 
 Com o kill switch publicado, a mesma consulta controlada foi submetida pela sessão autenticada. A interface exibiu uma única resposta sanitizada. A auditoria persistida confirmou decisão `kill_switch`, rota `legacy`, resultado `legacy_kill_switch`, provedor `legacy` e `toolCount=0`. A execução não registrou ferramentas THÁNOS nem fallback adicional.
 
-## Restauração segura
+## Estado de restauração publicado
 
-Após a prova de rollback, a configuração temporária foi removida do servidor: o piloto voltou ao estado desativado, sem audiência permitida e com a versão padrão. A prova operacional isolada de configuração passou após essa restauração. O estado publicado foi recarregado no marco de fechamento; nenhuma consulta adicional foi enviada durante esse período.
+Foi solicitada a remoção da configuração temporária e a prova operacional isolada passou. Contudo, a consulta final publicada ainda registrou decisão `kill_switch`, rota `legacy` e resultado `legacy_kill_switch`. Portanto, a restauração do estado publicado **não está confirmada**: o kill switch permanece ativo na instância publicada e protege o ambiente ao forçar a rota legada.
 
 ## Evidências concluídas
 
 - Consulta pública elegível, com resposta e histórico persistidos uma única vez após o recarregamento da configuração.
 - Auditoria sanitizada com `requestId`, rota THÁNOS, ferramentas, duração por etapa e status.
 - Ativação do kill switch, nova consulta pública e auditoria persistida de rota legada com decisão `kill_switch`.
-- Restauração do estado seguro com o piloto desativado e sem audiência temporária.
+
+## Pendência de restauração
+
+- Aplicar e confirmar no ambiente publicado o estado padrão: piloto desativado, kill switch desativado e audiência removida. Até essa confirmação, nenhuma nova consulta de piloto será executada.
