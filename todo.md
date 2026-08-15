@@ -99,7 +99,7 @@
 - [x] Aplicar o catálogo na seleção e execução de ferramentas, recusando ferramentas desabilitadas ou papéis não autorizados com auditoria apropriada.
 - [x] Expor o catálogo sanitizado por procedimento autenticado, sem lógica de execução, chaves, URLs ou possibilidade de criar ferramentas arbitrárias.
 - [x] Cobrir em testes a autorização, a recusa de ferramenta desabilitada, a sanitização do catálogo e o isolamento multi-tenant do fluxo real.
-- [ ] Validar a terceira fase com testes, build de produção, reinício do serviço de desenvolvimento e sincronização do repositório público.
+- [x] Validar a terceira fase com testes, build de produção, reinício do serviço de desenvolvimento e sincronização do repositório público.
 - [ ] Evoluir confirmações idempotentes e auditoria com requestId, tool, provedor/modelo, resultado e status de confirmação.
 - [ ] Preparar Hermes com estado sanitizado, circuit breaker, retries controlados e fallback local.
 - [ ] Preparar conector n8n desativado por padrão, com allowlist e sem URLs arbitrárias.
