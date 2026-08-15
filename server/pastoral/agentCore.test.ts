@@ -8,15 +8,16 @@ const context: TenantContext = { organizationId: 1, organizationName: "Igreja De
 class FakeRepository implements PastoralRepository {
   audits: Array<{ action: string; status: string; tool?: string }> = [];
   messages: Array<{ role: string; content: string }> = [];
+  readTools: string[] = [];
   followups = 0;
   private summary(tool: ToolResult["tool"]): ToolResult {
     return { tool, summary: "Resumo autorizado da Igreja Demonstração A.", data: { tenant: "A", count: 2 } };
   }
-  queryCells() { return Promise.resolve(this.summary("consultar_celulas")); }
-  queryReports() { return Promise.resolve(this.summary("consultar_relatorios")); }
-  queryAttendance() { return Promise.resolve(this.summary("consultar_presenca")); }
-  queryVisitors() { return Promise.resolve(this.summary("consultar_visitantes")); }
-  queryLeaders() { return Promise.resolve(this.summary("consultar_lideres")); }
+  queryCells() { this.readTools.push("consultar_celulas"); return Promise.resolve(this.summary("consultar_celulas")); }
+  queryReports() { this.readTools.push("consultar_relatorios"); return Promise.resolve(this.summary("consultar_relatorios")); }
+  queryAttendance() { this.readTools.push("consultar_presenca"); return Promise.resolve(this.summary("consultar_presenca")); }
+  queryVisitors() { this.readTools.push("consultar_visitantes"); return Promise.resolve(this.summary("consultar_visitantes")); }
+  queryLeaders() { this.readTools.push("consultar_lideres"); return Promise.resolve(this.summary("consultar_lideres")); }
   findVisitor(_context: TenantContext, name: string) { return Promise.resolve(name === "João" ? { id: 21, name: "João", followedUp: false } : null); }
   appendMessage(input: { role: "user" | "assistant"; content: string }) { this.messages.push(input); return Promise.resolve(); }
   writeFollowup() { this.followups += 1; return Promise.resolve({ created: this.followups === 1, visitorName: "João" }); }
@@ -32,6 +33,19 @@ describe("Agent Core pastoral", () => {
     expect(result.content).toContain("Resumo autorizado");
     expect(repository.audits).toContainEqual(expect.objectContaining({ action: "agent.respond", status: "success", tool: "consultar_presenca" }));
     expect(repository.messages).toHaveLength(2);
+  });
+
+  it("não confunde quantidade de igrejas com quantidade de células", async () => {
+    const repository = new FakeRepository();
+    const agent = new AgentCore(repository);
+
+    const result = await agent.respond({ context, conversationId: 4, message: "Quantas igrejas existem?" });
+
+    expect(result.tool).toBeUndefined();
+    expect(result.content).toContain("Igreja Demonstração A");
+    expect(result.content).toContain("não contabilizo");
+    expect(repository.readTools).toEqual([]);
+    expect(repository.audits).toContainEqual(expect.objectContaining({ action: "agent.respond", status: "success" }));
   });
 
   it("exige confirmação e mantém idempotência da Write Tool", async () => {

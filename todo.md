@@ -55,3 +55,5 @@
 - [x] Adicionar testes explícitos de autorização de escrita para cada papel de membership suportado e documentar a matriz de permissões.
 - [x] Ampliar os testes da rota de voz para payload excessivo, limite por usuário e auditoria das recusas autenticadas.
 - [x] Adicionar verificação específica de que a invalidação do chat permanece limitada à conversa ativa.
+- [x] Corrigir a interpretação do agente quando a pergunta mencionar igrejas, sem responder indevidamente com métricas de células.
+- [x] Adicionar teste de regressão para perguntas sobre quantidade de igrejas e escopo multi-tenant do assistente.

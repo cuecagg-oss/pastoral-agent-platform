@@ -2,6 +2,17 @@ import type { PastoralRepository, PastoralToolName, TenantContext, ToolResult } 
 
 const normalized = (value: string) => value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 
+export function isOrganizationCountIntent(message: string) {
+  const input = normalized(message);
+  const asksForCount = /\b(quant[ao]s?|quantidade|numero|número|total)\b/.test(input);
+  const mentionsOrganization = /\b(igreja|igrejas|organizacao|organizacoes)\b/.test(input);
+  const mentionsPastoralMetric = /\b(celula|celulas|relatorio|relatorios|visitante|visitantes|lider|lideres|presenca|reuniao)\b/.test(input);
+
+  // Church counts would cross the active tenant boundary. A question such as
+  // "quantas igrejas" must not silently fall through to the default cell tool.
+  return asksForCount && mentionsOrganization && !mentionsPastoralMetric;
+}
+
 export function chooseReadTool(message: string): PastoralToolName {
   const input = normalized(message);
   if (input.includes("relatorio") || input.includes("entregaram")) return "consultar_relatorios";

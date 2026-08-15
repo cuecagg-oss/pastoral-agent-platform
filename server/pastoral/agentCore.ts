@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { ModelRouter } from "./modelRouter";
 import { assertFollowupPermission } from "./policy";
-import { chooseReadTool, executeReadTool, extractVisitorName, isFollowupIntent } from "./toolRegistry";
+import { chooseReadTool, executeReadTool, extractVisitorName, isFollowupIntent, isOrganizationCountIntent } from "./toolRegistry";
 import type { AgentResponse, PastoralRepository, TenantContext } from "./types";
 
 const AGENT_NAME = "assistente-pastoral";
@@ -43,6 +43,20 @@ export class AgentCore {
         tool: "registrar_acompanhamento_visitante",
         confirmation: { visitorId: visitor.id, visitorName: visitor.name, note, idempotencyKey },
       };
+    }
+
+    if (isOrganizationCountIntent(message)) {
+      const content = `Você está consultando a **${context.organizationName}**. Para preservar a privacidade entre organizações, eu não contabilizo nem revelo outras igrejas. Posso informar dados autorizados da igreja atual, como células, relatórios, presença, visitantes e líderes.`;
+      await this.repository.appendMessage({ conversationId, context, role: "assistant", content, model: "pastoral-rules-v1" });
+      await this.repository.audit({
+        context,
+        action: "agent.respond",
+        agent: AGENT_NAME,
+        model: "pastoral-rules-v1",
+        status: "success",
+        metadata: { provider: "deterministic", intent: "organization_count_out_of_scope" },
+      });
+      return { content, provider: "deterministic", model: "pastoral-rules-v1" };
     }
 
     const tool = chooseReadTool(message);

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { chooseReadTool, extractVisitorName, isFollowupIntent } from "./toolRegistry";
+import { chooseReadTool, extractVisitorName, isFollowupIntent, isOrganizationCountIntent } from "./toolRegistry";
 
 describe("Tool Registry pastoral", () => {
   it("seleciona apenas ferramentas registradas para perguntas do MVP", () => {
@@ -13,5 +13,10 @@ describe("Tool Registry pastoral", () => {
     expect(isFollowupIntent(message)).toBe(true);
     expect(extractVisitorName(message)).toBe("João");
   });
-});
 
+  it("detecta contagem de igrejas como pergunta fora do escopo do tenant", () => {
+    expect(isOrganizationCountIntent("Quantas igrejas existem?")).toBe(true);
+    expect(isOrganizationCountIntent("Qual é o total de organizações?")).toBe(true);
+    expect(isOrganizationCountIntent("Quantas células tem nossa igreja?")).toBe(false);
+  });
+});
