@@ -1,7 +1,7 @@
 import type { Express, NextFunction, Request, Response } from "express";
 import multer from "multer";
 import { createContext } from "../_core/context";
-import { storagePut } from "../storage";
+import { storageGetSignedUrl, storagePut } from "../storage";
 import { getTenantContextForUser, DatabasePastoralRepository } from "./repository";
 import { transcribeVoiceInput } from "./voiceGateway";
 import { getVoiceProvider } from "./voiceProvider";
@@ -74,6 +74,7 @@ async function uploadAndTranscribe(req: Request, res: Response) {
       audioBytes,
       mimeType,
       storagePut: (key, data, contentType) => storagePut(key, data, contentType),
+      getStoredAudioUrl: storageGetSignedUrl,
       getVoice: getVoiceProvider,
       repository,
     });

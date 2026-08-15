@@ -23,3 +23,9 @@ O incidente inicial foi localizado antes da transcrição: a gravação era conv
 A primeira troca para corpo binário bruto também foi bloqueada pelo gateway externo com HTTP 403 em HTML, antes de alcançar a aplicação. O cliente agora envia o `Blob` como `multipart/form-data` no campo `audio`; o servidor recebe o arquivo com limite de 16 MB e preserva validação de MIME, autenticação, limite por usuário e auditoria.
 
 O smoke test externo multipart alcançou a aplicação e recebeu `401` JSON sem sessão, em vez do `403` do gateway. Isso comprova que o transporte passa pelo gateway e chega ao middleware de autenticação. A checagem TypeScript, os 23 testes automatizados e o build de produção também foram concluídos após a alteração. A confirmação restante exige uma sessão autenticada no celular.
+
+## URL assinada para transcrição
+
+Com o multipart aceito pelo gateway, os registros autenticados mostraram que o processamento ainda falhava depois do upload. A causa era a URL relativa privada retornada por `storagePut` (`/manus-storage/...`), que não é um endereço que o serviço de transcrição consegue buscar. O gateway agora solicita uma URL de leitura assinada pelo `storageGetSignedUrl` e somente essa URL é enviada ao provedor; o caminho interno e os bytes de áudio permanecem fora do log de auditoria.
+
+O comportamento foi coberto por teste de unidade que confirma uma URL assinada no provedor. A checagem TypeScript e a regressão de 23 testes foram aprovadas. A validação final permanece dependente de uma gravação autenticada no navegador do usuário.

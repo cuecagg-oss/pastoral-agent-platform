@@ -1,13 +1,15 @@
 import type { PastoralRepository, TenantContext } from "./types";
 import type { VoiceProvider } from "./voiceProvider";
 
-type VoiceStorage = (key: string, data: Uint8Array, contentType: string) => Promise<{ url: string }>;
+type VoiceStorage = (key: string, data: Uint8Array, contentType: string) => Promise<{ key: string; url: string }>;
+type VoiceSignedUrl = (key: string) => Promise<string>;
 
 type TranscribeVoiceInput = {
   context: TenantContext;
   audioBytes: Uint8Array;
   mimeType: string;
   storagePut: VoiceStorage;
+  getStoredAudioUrl: VoiceSignedUrl;
   getVoice: () => VoiceProvider;
   repository: Pick<PastoralRepository, "audit">;
 };
@@ -20,7 +22,8 @@ export async function transcribeVoiceInput(input: TranscribeVoiceInput) {
   try {
     const key = `pastoral-audio/${input.context.organizationId}/${input.context.userId}/${Date.now()}.${extensionFor(input.mimeType)}`;
     const stored = await input.storagePut(key, input.audioBytes, input.mimeType);
-    const transcript = await input.getVoice().transcribe(stored.url);
+    const audioUrl = await input.getStoredAudioUrl(stored.key);
+    const transcript = await input.getVoice().transcribe(audioUrl);
     await input.repository.audit({
       context: input.context,
       action: "voice.transcribe",
