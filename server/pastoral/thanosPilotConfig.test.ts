@@ -28,3 +28,20 @@ describe("Thanos pilot routing", () => {
     expect(decideThanosPilotRoute({ context, message: "Quantas igrejas existem?", config: config() })).toMatchObject({ route: "legacy", reason: "intent_not_eligible" });
   });
 });
+
+
+it("valida o contrato da configuração temporária sem expor allowlists", () => {
+  const runtime = resolveThanosPilotRuntimeConfig({
+    enabled: "true",
+    killSwitch: "false",
+    organizationIds: "positive-session-allowlist",
+    userIds: "positive-session-allowlist",
+    version: "thanos-live-validation-v2",
+  });
+
+  expect(runtime.enabled).toBe(true);
+  expect(runtime.killSwitch).toBe(false);
+  expect(runtime.version).toBe("thanos-live-validation-v2");
+  expect(runtime.organizationIds).toEqual([]);
+  expect(runtime.userIds).toEqual([]);
+});
