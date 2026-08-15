@@ -138,7 +138,7 @@
 - [x] Revalidar isolamento de tenant, acesso administrativo, catálogo de ferramentas, confirmações idempotentes e auditoria por meio dos contratos tRPC e testes direcionados.
 - [x] Revalidar os fluxos de voz em formatos móveis suportados, privacidade da transcrição e os estados de fallback de TTS sem expor conteúdo reconhecido.
 - [x] Verificar visualmente Dashboard, Chat e Configurações em desktop e celular, incluindo estados de carregamento e recuperação de falhas onde disponíveis.
-- [ ] Atualizar documentação final, salvar checkpoint, sincronizar GitHub e entregar a evolução aprovada.
+- [x] Atualizar documentação final, salvar checkpoint, sincronizar GitHub e entregar a evolução aprovada.
 - [x] Atualizar baseline, decisões, roadmap e backlog com as fases concluídas, contratos implementados, salvaguardas e limites operacionais atuais.
 - [x] Registrar o resultado final de validação, versão publicada e instruções operacionais sem expor segredos ou endpoints internos.
-- [ ] Sincronizar a versão final no repositório público e confirmar a disponibilidade do branch principal.
+- [x] Sincronizar a versão final no repositório público e confirmar a disponibilidade do branch principal.
