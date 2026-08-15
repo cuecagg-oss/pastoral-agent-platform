@@ -22,6 +22,8 @@
 - [x] Cobrir os estados vazio e erro do dashboard e do chat no cliente sem depender de carregamento indefinido.
 - [x] Testar a seleção do VoiceProvider para configuração padrão e valor inválido, documentando o fallback suportado.
 - [ ] Registrar como pendente a validação manual em dispositivo real dos fluxos de microfone, confirmação de escrita e síntese de voz.
+- [x] Investigar a nova falha reportada no envio de áudio após a auditoria, com evidência de navegador, rede e servidor.
+- [x] Substituir o envio bruto de áudio bloqueado pelo gateway por upload multipart autenticado, mantendo limites, auditoria e transcrição.
 - [x] Adicionar e validar um estado vazio explícito no dashboard para uma igreja sem registros pastorais.
 - [x] Diagnosticar e corrigir a falha no envio de mensagem de voz reportada em celular, incluindo feedback acionável para permissões, upload e transcrição.
 - [x] Comparar requisitos funcionais e de segurança com o schema, procedimentos, interface e documentação do MVP.

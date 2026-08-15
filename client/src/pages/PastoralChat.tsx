@@ -59,7 +59,10 @@ export default function PastoralChat() {
     if (!conversationId) return;
     setIsUploadingVoice(true);
     try {
-      const response = await fetch("/api/pastoral/voice", { method: "POST", credentials: "include", headers: { "content-type": mimeType, "x-pastoral-voice-request": "1" }, body: audio });
+      const extension = mimeType.split("/")[1] || "webm";
+      const formData = new FormData();
+      formData.append("audio", audio, `mensagem-pastoral.${extension}`);
+      const response = await fetch("/api/pastoral/voice", { method: "POST", credentials: "include", headers: { "x-pastoral-voice-request": "1" }, body: formData });
       const payload = await response.json().catch(() => ({})) as { text?: string; error?: string };
       if (!response.ok || !payload.text) throw new Error(payload.error || "Não foi possível enviar o áudio.");
       toast.success("Áudio transcrito. Enviando ao assistente.");

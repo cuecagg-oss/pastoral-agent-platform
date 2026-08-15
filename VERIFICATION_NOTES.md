@@ -18,6 +18,8 @@ Permanece necessário testar em um dispositivo físico a permissão de microfone
 
 ## Correção do envio de voz
 
-O incidente reportado foi localizado antes da transcrição: a gravação era convertida em Base64 e enviada dentro de uma mutation tRPC/JSON. O registro de rede mostrou que esse request foi recusado com HTTP 403 pelo gateway, portanto o Agent Core e o provedor de voz não chegaram a processar o áudio.
+O incidente inicial foi localizado antes da transcrição: a gravação era convertida em Base64 e enviada dentro de uma mutation tRPC/JSON. O registro de rede mostrou que esse request foi recusado com HTTP 403 pelo gateway, portanto o Agent Core e o provedor de voz não chegaram a processar o áudio.
 
-O cliente agora envia os bytes do `Blob` para `/api/pastoral/voice` com `Content-Type` de áudio, e a rota autenticada monta o contexto do tenant, armazena o arquivo, chama a transcrição e audita o resultado. A rota foi verificada sem sessão, retornando 401; a checagem de tipos e 16 testes automatizados foram concluídos com êxito. Resta apenas a confirmação prática com uma sessão autenticada em dispositivo móvel.
+A primeira troca para corpo binário bruto também foi bloqueada pelo gateway externo com HTTP 403 em HTML, antes de alcançar a aplicação. O cliente agora envia o `Blob` como `multipart/form-data` no campo `audio`; o servidor recebe o arquivo com limite de 16 MB e preserva validação de MIME, autenticação, limite por usuário e auditoria.
+
+O smoke test externo multipart alcançou a aplicação e recebeu `401` JSON sem sessão, em vez do `403` do gateway. Isso comprova que o transporte passa pelo gateway e chega ao middleware de autenticação. A checagem TypeScript, os 23 testes automatizados e o build de produção também foram concluídos após a alteração. A confirmação restante exige uma sessão autenticada no celular.

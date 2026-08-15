@@ -1,4 +1,5 @@
-import express, { type Express, type NextFunction, type Request, type Response } from "express";
+import type { Express, NextFunction, Request, Response } from "express";
+import multer from "multer";
 import { createContext } from "../_core/context";
 import { storagePut } from "../storage";
 import { getTenantContextForUser, DatabasePastoralRepository } from "./repository";
@@ -11,6 +12,7 @@ const VOICE_REQUEST_HEADER = "1";
 const REQUEST_WINDOW_MS = 60_000;
 const REQUEST_LIMIT_PER_WINDOW = 5;
 const voiceRequestTimestamps = new Map<number, number[]>();
+const voiceUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 16 * 1024 * 1024 } });
 
 type VoiceUploadRejection = {
   status: number;
@@ -60,13 +62,13 @@ async function uploadAndTranscribe(req: Request, res: Response) {
       await auditVoiceRejection(repository, context, rejection.reason).catch(() => undefined);
       return res.status(rejection.status).json({ error: rejection.error });
     };
-    const bytes = req.body instanceof Buffer ? new Uint8Array(req.body) : null;
-    const validation = validateVoiceUploadRequest({ requestHeader: req.header("x-pastoral-voice-request"), contentType: req.header("content-type"), byteLength: bytes?.byteLength ?? 0 });
+    const file = req.file;
+    const validation = validateVoiceUploadRequest({ requestHeader: req.header("x-pastoral-voice-request"), contentType: file?.mimetype, byteLength: file?.size ?? 0 });
     if (validation) return reject(validation);
-    const mimeType = normalizeAudioMimeType(req.header("content-type"));
+    const mimeType = normalizeAudioMimeType(file?.mimetype);
     if (!mimeType) return reject({ status: 415, error: "Formato de áudio não suportado.", reason: "unsupported_mime_type" });
     if (!allowVoiceUpload(context.userId)) return reject({ status: 429, error: "Muitas tentativas de áudio em pouco tempo. Aguarde um minuto e tente novamente.", reason: "rate_limited" });
-    const audioBytes = bytes as Uint8Array;
+    const audioBytes = new Uint8Array(file!.buffer);
     const transcript = await transcribeVoiceInput({
       context,
       audioBytes,
@@ -85,11 +87,11 @@ async function uploadAndTranscribe(req: Request, res: Response) {
 }
 
 export function registerVoiceUploadRoute(app: Express) {
-  app.post("/api/pastoral/voice", express.raw({ type: "audio/*", limit: "16mb" }), (req, res) => {
+  app.post("/api/pastoral/voice", voiceUpload.single("audio"), (req, res) => {
     void uploadAndTranscribe(req, res);
   });
-  app.use(async (error: { type?: string }, req: Request, res: Response, next: NextFunction) => {
-    if (req.path === "/api/pastoral/voice" && error.type === "entity.too.large") {
+  app.use(async (error: unknown, req: Request, res: Response, next: NextFunction) => {
+    if (req.path === "/api/pastoral/voice" && error instanceof multer.MulterError && error.code === "LIMIT_FILE_SIZE") {
       try {
         const requestContext = await createContext({ req, res } as Parameters<typeof createContext>[0]);
         if (requestContext.user) {
