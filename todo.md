@@ -77,3 +77,5 @@
 - [x] Cobrir privacidade, isolamento e ordenação do histórico de voz com testes de regressão.
 - [x] Adicionar regressão explícita de isolamento para que uma mensagem de voz não possa ser lida por outro tenant ou usuário.
 - [x] Adicionar regressão explícita para um segundo usuário da mesma organização que tente ler uma mensagem de voz em conversa alheia.
+- [x] Criar um repositório privado no GitHub e adicionar o remoto de espelhamento sem substituir o remoto interno de publicação.
+- [x] Enviar o branch principal atual ao GitHub e verificar a disponibilidade do repositório privado.
