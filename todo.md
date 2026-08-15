@@ -165,7 +165,12 @@
 - [x] Fase D — Declarar a skill Pastoral com limites de canal, capabilities e política de apenas leitura para o piloto THÁNOS.
 - [x] Fase D — Trocar a fachada compatível por resolução no registro de workspace e skill, mantendo equivalência de resposta, confirmação e auditoria.
 - [x] Fase D — Cobrir a seleção de workspace, skill e ferramenta Pastoral, incluindo negação de associação, papel e capability incompatíveis.
-- [ ] Fase E — Implementar e validar piloto multi-step somente leitura com no máximo três ferramentas autorizadas.
+- [x] Fase E — Implementar e validar piloto multi-step somente leitura com no máximo três ferramentas autorizadas.
 - [ ] Fase F — Validar integralmente, documentar e estabilizar a arquitetura THÁNOS.
 - [ ] Publicar e entregar o ciclo THÁNOS no repositório público.
 - [x] Fase D — Alinhar a lista declarada de ferramentas da skill somente leitura às categorias READ autorizadas pelo catálogo pastoral.
+- [x] Fase E — Criar orquestrador multi-step declarativo com sequência de duas a três ferramentas READ, evidências compostas e geração única de resposta.
+- [x] Fase E — Auditar cada etapa do piloto multi-step com índice, ferramenta, resultado sanitizado e fallback determinístico em falha operacional.
+- [x] Fase E — Criar adaptador Pastoral multi-step que encadeie `consultar_celulas` e `consultar_presenca` sob contexto autenticado único.
+- [x] Fase E — Cobrir sequência completa, falha intermediária, auditoria por etapa e isolamento de tenant em testes determinísticos.
+- [x] Fase E — Validar o piloto multi-step com regressão integral, build, auditoria de código e checkpoint estável.

@@ -1,7 +1,7 @@
 import type { SkillDefinition, ThanosContext } from "../../thanos/contracts";
 import type { ThanosReadTool } from "../../thanos/orchestrator";
 import { chooseReadTool, executeReadTool } from "../../pastoral/toolRegistry";
-import type { PastoralRepository, TenantContext, ToolCatalogEntry } from "../../pastoral/types";
+import type { PastoralRepository, PastoralToolName, TenantContext, ToolCatalogEntry } from "../../pastoral/types";
 
 export class PastoralSkillPolicyError extends Error {
   constructor(message: string) {
@@ -32,18 +32,42 @@ export function createPastoralReadToolAdapter(input: Readonly<{
   toolCatalog: readonly ToolCatalogEntry[];
   message: string;
 }>): ThanosReadTool {
+  return createPastoralDeclaredReadToolAdapter({ ...input, tool: chooseReadTool(input.message) });
+}
+
+export function createPastoralDeclaredReadToolAdapter(input: Readonly<{
+  repository: PastoralRepository;
+  tenantContext: TenantContext;
+  thanosContext: ThanosContext;
+  skill: SkillDefinition;
+  toolCatalog: readonly ToolCatalogEntry[];
+  tool: Exclude<PastoralToolName, "registrar_acompanhamento_visitante">;
+}>): ThanosReadTool {
   assertPastoralReadSkill({ skill: input.skill, context: input.thanosContext });
-  const tool = chooseReadTool(input.message);
-  if (!input.skill.allowedTools.includes(tool)) {
+  if (!input.skill.allowedTools.includes(input.tool)) {
     throw new PastoralSkillPolicyError("A ferramenta selecionada não é autorizada pela skill atual.");
   }
-  const catalogEntry = input.toolCatalog.find(entry => entry.name === tool);
+  const catalogEntry = input.toolCatalog.find(entry => entry.name === input.tool);
   if (!catalogEntry || catalogEntry.category !== "READ") {
     throw new PastoralSkillPolicyError("A ferramenta selecionada não está disponível em modo somente leitura.");
   }
   return Object.freeze({
-    name: tool,
+    name: input.tool,
     requiredCapability: "agent:read",
-    execute: async () => executeReadTool(input.repository, input.tenantContext, tool, input.toolCatalog),
+    execute: async () => executeReadTool(input.repository, input.tenantContext, input.tool, input.toolCatalog),
   });
+}
+
+/** Sequência fixa do piloto: duas consultas READ independentes com o mesmo tenant autenticado. */
+export function createPastoralMultiStepReadAdapters(input: Readonly<{
+  repository: PastoralRepository;
+  tenantContext: TenantContext;
+  thanosContext: ThanosContext;
+  skill: SkillDefinition;
+  toolCatalog: readonly ToolCatalogEntry[];
+}>): readonly ThanosReadTool[] {
+  return Object.freeze([
+    createPastoralDeclaredReadToolAdapter({ ...input, tool: "consultar_celulas" }),
+    createPastoralDeclaredReadToolAdapter({ ...input, tool: "consultar_presenca" }),
+  ]);
 }
