@@ -122,7 +122,11 @@
 - [x] Expor o resumo por procedimento autenticado e cobrir métricas, tendências, pendências, insights e isolamento por tenant em testes de serviço e integração.
 - [x] Formalizar e testar a política de acesso ao Dashboard por papel, preservando a visão gerencial autorizada para cada membership autenticada.
 - [x] Declarar o escopo temporal de relatórios pendentes, visitantes sem retorno e observações de liderança, retornando o período ou motivo de escopo no contrato e nos testes.
-- [ ] Evoluir o Dashboard preservando a visão gerencial e acrescentando camada inteligente com estados de fallback.
+- [x] Evoluir o Dashboard preservando a visão gerencial e acrescentando camada inteligente com estados de fallback.
+- [x] Conectar a página de visão geral ao contrato `overview` autenticado, preservando o layout administrativo atual e os dados existentes em fallback compatível.
+- [x] Exibir métricas pastorais, tendências e pendências com rótulos de período ou escopo, estados de carregamento, vazio e erro acessíveis.
+- [x] Criar painel de camada inteligente para insights determinísticos e indicar explicitamente a indisponibilidade de insights generativos sem simular conteúdo de IA.
+- [x] Cobrir a experiência do Dashboard em testes de apresentação e verificação visual desktop e celular.
 - [ ] Criar área administrativa de Configurações por papel para organização, usuários, IA, Hermes, voz, ferramentas, integrações e auditoria.
 - [ ] Cobrir segurança, isolamento, fallback, confirmação, Dashboard e Configurações com testes e verificação visual responsiva.
 - [ ] Atualizar documentação, salvar checkpoint, sincronizar o GitHub e entregar a evolução publicada.
