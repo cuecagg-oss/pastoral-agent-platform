@@ -63,3 +63,5 @@ Antes de cada extração, a suíte integral, a checagem de tipos e o build de pr
 | Auditoria por etapa | Aprovado | Cada leitura concluída registra ferramenta e índice de etapa; falhas registram apenas resultado sanitizado, sem prompts, evidências completas ou detalhes internos de exceção. |
 | Fallback multi-step | Aprovado | Uma falha operacional de ferramenta ou geração retorna resposta determinística com evidência já autorizada e concluída; falhas de capability são negadas antes de qualquer execução. |
 | Adaptador multi-step Pastoral | Aprovado | O piloto encadeia `consultar_celulas` e `consultar_presenca` pelo contexto autenticado do workspace, sem trocar organização ou aceitar ferramentas arbitrárias. |
+| Validação e estabilização final | Aprovado | Checagem TypeScript, 94 testes em 32 arquivos, build e auditoria de dependências de produção foram aprovados; o ambiente foi reiniciado sem nova ocorrência de erro de módulo. |
+| Limite de adoção | Aprovado | O piloto permanece interno e compatível: a rota pública continua no AgentGateway/AgentCore até existir aprovação de roteamento, telemetria e rollback. |

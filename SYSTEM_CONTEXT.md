@@ -21,6 +21,8 @@ O sistema opera por organização. A sessão identifica o usuário; a membership
 | Métricas do Dashboard | Agregadas no servidor e sempre delimitadas ao tenant atual. |
 | Insights | Dados agregados e sanitizados; sem nomes pessoais, áudio, chaves ou dados de outras organizações. |
 | Auditoria | Metadados operacionais mínimos, sem segredos, transcrição ou chain-of-thought. |
+| Contexto THÁNOS | `workspaceKey` identifica o workspace, `tenantId` a organização autenticada e `domain` o domínio de negócio. |
+| Piloto multi-step | Todas as etapas READ usam o mesmo contexto autenticado; evidências aprovadas são compostas e falhas operacionais usam fallback determinístico. |
 
 ## Variáveis e configuração
 
@@ -29,3 +31,5 @@ Configuração de provedores é exclusivamente server-side. O Gateway usa `AGENT
 Hermes e n8n iniciam desativados. Hermes só opera por caminho opt-in, timeout, retries limitados, circuit breaker e fallback local; n8n somente reconhece workflows allowlisted e não aceita URL, webhook ou carga arbitrária nesta versão.
 
 Preferências administrativas por organização podem apenas restringir ou habilitar capacidades já allowlisted. Elas não podem criar providers, definir URLs, informar chaves, trocar modelos globais ou criar ferramentas arbitrárias.
+
+O THÁNOS é um núcleo interno com registros fechados de workspace e skill. No workspace Pastoral, a skill de piloto opera apenas pelo canal `chat`, exige a capability `agent:read` e permite exclusivamente as leituras declaradas. A rota pública ainda é atendida pelo Agent Gateway compatível; nenhuma ativação do piloto altera confirmações de escrita, histórico ou isolamento já vigentes.

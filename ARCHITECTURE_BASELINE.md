@@ -2,7 +2,7 @@
 
 ## Propósito e estado consolidado
 
-Este documento descreve o estado verificável do Assistente Pastoral após a evolução de Gateway, catálogo declarativo, auditoria enriquecida, Dashboard gerencial e Configurações administrativas. Ele permanece a referência de compatibilidade: nenhuma entrega posterior pode reduzir o isolamento por organização, expor transcrições, segredos ou raciocínio interno, nem eliminar o caminho local quando provedores novos estiverem indisponíveis.
+Este documento descreve o estado verificável do Assistente Pastoral após a evolução de Gateway, catálogo declarativo, auditoria enriquecida, Dashboard gerencial, Configurações administrativas e o ciclo THÁNOS. Ele permanece a referência de compatibilidade: nenhuma entrega posterior pode reduzir o isolamento por organização, expor transcrições, segredos ou raciocínio interno, nem eliminar o caminho local quando provedores novos estiverem indisponíveis.
 
 ## Componentes atuais
 
@@ -16,6 +16,9 @@ Este documento descreve o estado verificável do Assistente Pastoral após a evo
 | Auditoria | Eventos de ferramenta, voz e Hermes com `requestId`, resultado, confirmação e provedor/modelo, sem chain-of-thought. | Logs permanecem sanitizados e filtrados por tenant. |
 | Dashboard | Métricas gerenciais, tendências, pendências com escopo declarado e insights determinísticos. | A tela continua a visão gerencial principal, não é substituída por chat ou IA generativa. |
 | Configurações | Área administrativa por papel para status e controles allowlisted. | Nenhum segredo, URL sensível, tool ou workflow arbitrário é criado pela interface. |
+| Núcleo THÁNOS | Contexto tipado, registros fechados, orquestração de leitura e portas sanitizadas. | `workspaceKey`, `tenantId` e `domain` são identidades distintas e não intercambiáveis. |
+| Workspace Pastoral | Skill `pastoral-assistant`, adaptadores declarativos READ e fachada compatível. | A skill aceita apenas `chat`, exige `agent:read` e não permite `WRITE` ou `SENSITIVE`. |
+| Piloto multi-step | Duas leituras pastorais fixas — células e presença — sob um único contexto. | Aceita somente 2–3 passos READ; falha operacional retorna fallback determinístico sem expor erro bruto. |
 
 ## Fluxos obrigatórios
 
@@ -29,6 +32,10 @@ flowchart LR
   G --> F[Fallback Agent Core]
   R --> DB[(Banco isolado por tenant)]
   G --> A[Audit log sanitizado]
+  T -. piloto interno .-> X[ThanosContext tipado]
+  X --> W[Registros fechados de workspace e skill]
+  W --> O[Orquestrador READ de uma ou múltiplas etapas]
+  O --> A
 ```
 
 O fluxo de voz utiliza a mesma cadeia depois da transcrição privada. Antes de o Gateway receber a intenção, o sistema persiste somente o marcador **Mensagem de voz**. O fluxo de texto persiste a mensagem do usuário conforme a política de conversa existente.
@@ -46,3 +53,7 @@ O fluxo de voz utiliza a mesma cadeia depois da transcrição privada. Antes de 
 ## Critério de compatibilidade e rollback
 
 Com Hermes desativado, indisponível ou inválido, o comportamento de texto e voz continua a usar o Agent Core local. O Dashboard tradicional continua disponível se a camada inteligente falhar. O n8n fica sem execução externa enquanto desativado. Toda migração é aditiva e reversível logicamente por configuração, com `AGENT_GATEWAY_PROVIDER=legacy`, `HERMES_ENABLED=false` e `N8N_ENABLED=false` como retorno operacional seguro.
+
+## Limite de adoção do THÁNOS
+
+O núcleo THÁNOS está estabilizado como piloto interno e caminho de compatibilidade do workspace Pastoral. A rota pública de conversa continua no `AgentGateway` e no `AgentCore` existentes; a troca dessa rota exige uma decisão explícita, métricas operacionais, teste de rollback e caracterização adicional. Portanto, o piloto não altera a semântica pública do chat, da confirmação de escrita ou do histórico persistente nesta versão.
