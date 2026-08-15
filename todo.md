@@ -150,7 +150,11 @@
 - [x] Fase A — Formalizar e testar as invariantes server-side entre `workspaceKey`, `tenantId` e `domain`, sem alterar contratos externos.
 - [x] Fase A — Validar regressão, build, auditoria de código pendente e documentação antes de extrair o contexto genérico.
 - [x] Fase A — Corrigir chave duplicada na lista de auditoria administrativa e cobrir sua identidade estável em teste de apresentação.
-- [ ] Fase B — Criar contexto THÁNOS e registros de workspace e skill com adaptadores compatíveis.
+- [x] Fase B — Criar contexto THÁNOS e registros de workspace e skill com adaptadores compatíveis.
+- [x] Fase B — Definir contratos tipados para contexto, workspace, skill, capability e canal, mantendo `workspaceKey`, `tenantId` e `domain` não intercambiáveis.
+- [x] Fase B — Implementar o registro fechado de workspaces e skills, com apenas `pastoral` registrado e negação explícita de chaves desconhecidas.
+- [x] Fase B — Implementar o adaptador Pastoral que resolve identidade, permissões, canal e requestId exclusivamente a partir de contexto autenticado server-side.
+- [x] Fase B — Cobrir construção, negação e compatibilidade do contexto THÁNOS sem mudar procedimentos tRPC ou componentes React existentes.
 - [ ] Fase C — Extrair infraestrutura central com adaptadores compatíveis e rollback por fachada.
 - [ ] Fase D — Converter o Pastoral em workspace, skill e ferramentas declaradas.
 - [ ] Fase E — Implementar e validar piloto multi-step somente leitura com no máximo três ferramentas autorizadas.
