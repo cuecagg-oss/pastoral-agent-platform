@@ -5,9 +5,6 @@ import { systemRouter } from "./_core/systemRouter";
 import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import { AgentCore } from "./pastoral/agentCore";
 import { DatabasePastoralRepository, dashboardSummary, getOrCreateConversation, getTenantContextForUser, listMessages } from "./pastoral/repository";
-import { getVoiceProvider } from "./pastoral/voiceProvider";
-import { transcribeVoiceInput } from "./pastoral/voiceGateway";
-import { storagePut } from "./storage";
 
 const repository = new DatabasePastoralRepository();
 const agentCore = new AgentCore(repository);
@@ -50,19 +47,6 @@ export const appRouter = router({
     confirmFollowup: protectedProcedure.input(z.object({ conversationId: z.number().int().positive(), visitorId: z.number().int().positive(), note: z.string().min(1).max(2000), idempotencyKey: z.string().uuid() })).mutation(async ({ ctx, input }) => {
       const tenant = await currentTenant(ctx.user.id);
       return agentCore.confirmFollowup({ context: tenant, ...input });
-    }),
-    transcribe: protectedProcedure.input(z.object({ audioBase64: z.string().min(16).max(22_500_000), mimeType: z.enum(["audio/webm", "audio/ogg", "audio/wav", "audio/mpeg", "audio/mp4"]) })).mutation(async ({ ctx, input }) => {
-      const tenant = await currentTenant(ctx.user.id);
-      const blob = await fetch(`data:${input.mimeType};base64,${input.audioBase64}`).then(response => response.blob());
-      const audioBytes = Buffer.from(await blob.arrayBuffer());
-      return transcribeVoiceInput({
-        context: tenant,
-        audioBytes,
-        mimeType: input.mimeType,
-        storagePut,
-        getVoice: getVoiceProvider,
-        repository,
-      });
     }),
   }),
 });

@@ -11,6 +11,7 @@ import {
   users,
   visitors,
 } from "../../drizzle/schema";
+import type { TenantRole } from "./types";
 
 let demoSeedPromise: Promise<void> | undefined;
 
@@ -41,7 +42,7 @@ async function ensureUser(db: MySql2Database<Record<string, unknown>>, openId: s
   return created[0];
 }
 
-async function ensureMembership(db: MySql2Database<Record<string, unknown>>, organizationId: number, userId: number, role: "pastor" | "leader") {
+async function ensureMembership(db: MySql2Database<Record<string, unknown>>, organizationId: number, userId: number, role: TenantRole) {
   const existing = await db.select().from(organizationMemberships).where(and(eq(organizationMemberships.organizationId, organizationId), eq(organizationMemberships.userId, userId))).limit(1);
   if (!existing[0]) await db.insert(organizationMemberships).values({ organizationId, userId, role });
 }

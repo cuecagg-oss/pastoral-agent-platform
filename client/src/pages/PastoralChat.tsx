@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import DashboardLayout from "@/components/DashboardLayout";
 import { useAuth } from "@/_core/hooks/useAuth";
+import { invalidateActiveConversationMessages } from "@/lib/conversationCache";
 import { trpc } from "@/lib/trpc";
 import { Loader2, MessageCircleHeart, Sparkles, Volume2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -27,7 +28,7 @@ export default function PastoralChat() {
   const sendMutation = trpc.pastoral.sendMessage.useMutation({
     onSuccess: result => {
       if (result.confirmation) setPendingFollowup(result.confirmation);
-      void utils.pastoral.messages.invalidate();
+      invalidateActiveConversationMessages(conversationId, input => utils.pastoral.messages.invalidate(input));
     },
     onError: error => toast.error(error.message),
   });
@@ -35,7 +36,7 @@ export default function PastoralChat() {
     onSuccess: () => {
       toast.success("Acompanhamento confirmado e auditado.");
       setPendingFollowup(null);
-      void utils.pastoral.messages.invalidate();
+      invalidateActiveConversationMessages(conversationId, input => utils.pastoral.messages.invalidate(input));
     },
     onError: error => toast.error(error.message),
   });
@@ -58,7 +59,7 @@ export default function PastoralChat() {
     if (!conversationId) return;
     setIsUploadingVoice(true);
     try {
-      const response = await fetch("/api/pastoral/voice", { method: "POST", credentials: "include", headers: { "content-type": mimeType }, body: audio });
+      const response = await fetch("/api/pastoral/voice", { method: "POST", credentials: "include", headers: { "content-type": mimeType, "x-pastoral-voice-request": "1" }, body: audio });
       const payload = await response.json().catch(() => ({})) as { text?: string; error?: string };
       if (!response.ok || !payload.text) throw new Error(payload.error || "Não foi possível enviar o áudio.");
       toast.success("Áudio transcrito. Enviando ao assistente.");

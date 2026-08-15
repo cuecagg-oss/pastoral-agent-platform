@@ -9,8 +9,18 @@ describe("política multi-tenant", () => {
     expect(() => assertTenantScope(pastorA, 2)).toThrow(TenantIsolationError);
   });
 
-  it("permite acompanhamento para pastor e bloqueia líder", () => {
-    expect(() => assertFollowupPermission(pastorA)).not.toThrow();
-    expect(() => assertFollowupPermission({ ...pastorA, role: "leader" })).toThrow(AuthorizationError);
+  it("permite acompanhamento para papéis responsáveis e bloqueia líder", () => {
+    const expected: Array<[TenantContext["role"], boolean]> = [
+      ["admin", true],
+      ["pastor", true],
+      ["supervisor", true],
+      ["leader", false],
+    ];
+
+    for (const [role, allowed] of expected) {
+      const attempt = () => assertFollowupPermission({ ...pastorA, role });
+      if (allowed) expect(attempt).not.toThrow();
+      else expect(attempt).toThrow(AuthorizationError);
+    }
   });
 });

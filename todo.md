@@ -24,3 +24,24 @@
 - [ ] Registrar como pendente a validação manual em dispositivo real dos fluxos de microfone, confirmação de escrita e síntese de voz.
 - [x] Adicionar e validar um estado vazio explícito no dashboard para uma igreja sem registros pastorais.
 - [x] Diagnosticar e corrigir a falha no envio de mensagem de voz reportada em celular, incluindo feedback acionável para permissões, upload e transcrição.
+- [x] Comparar requisitos funcionais e de segurança com o schema, procedimentos, interface e documentação do MVP.
+- [x] Auditar o isolamento multi-tenant, escopo de autorização, auditoria de operações e exposição de dados no backend.
+- [x] Auditar o upload binário de voz, os limites de payload, a autenticação da rota e o feedback de falha no cliente.
+- [x] Executar análise estática, testes, build, consulta de integridade de dados e revisão visual desktop/mobile.
+- [x] Corrigir bugs e inconsistências encontrados na auditoria e repetir a regressão até não haver falhas reproduzíveis na cobertura disponível.
+- [x] Unificar o tipo de papel de membership com o enum multi-tenant e cobrir permissões de escrita para todos os papéis.
+- [x] Endurecer a rota de voz com ordem correta de parsers, requisição identificada pelo cliente, limite por usuário, resposta JSON para payload excessivo e auditoria de recusas.
+- [x] Restringir a invalidação do cache de mensagens à conversa ativa e cobrir a mudança sem ampliar escopo de dados.
+- [x] Remover a mutation legada de transcrição Base64 para manter um único caminho de voz autenticado e auditado.
+- [x] Corrigir o encaminhamento de erros Express para que o handler de limite de áudio não oculte erros de outras rotas.
+- [x] Atualizar a dependência transitiva fast-xml-parser para a versão corrigida ou uma cadeia AWS compatível, revalidando build e auditoria de produção.
+- [x] Reduzir vulnerabilidades de alta severidade removendo dependências diretas não utilizadas e atualizando bibliotecas de infraestrutura compatíveis.
+- [x] Adaptar o padrão legado de rota de armazenamento à sintaxe do Express 5 e recuperar a inicialização da prévia.
+- [x] Adaptar os fallbacks de SPA do Vite à sintaxe do Express 5 para recuperar a prévia após a atualização do roteador.
+- [x] Adicionar testes explícitos de autorização de escrita para cada papel de membership suportado e documentar a matriz de permissões.
+- [x] Ampliar os testes da rota de voz para payload excessivo, limite por usuário e auditoria das recusas autenticadas.
+- [x] Adicionar verificação específica de que a invalidação do chat permanece limitada à conversa ativa.
+- [x] Garantir que o teste de invalidação da conversa ativa seja descoberto pelo Vitest e registrar a contagem final comprovada.
+- [x] Adicionar testes explícitos de autorização de escrita para cada papel de membership suportado e documentar a matriz de permissões.
+- [x] Ampliar os testes da rota de voz para payload excessivo, limite por usuário e auditoria das recusas autenticadas.
+- [x] Adicionar verificação específica de que a invalidação do chat permanece limitada à conversa ativa.
