@@ -196,6 +196,6 @@
 - [x] Fechamento THÁNOS — Criar cobertura específica de `consultar_relatorios` para sucesso, terceira etapa, desabilitação, papel, capability, falha parcial e isolamento.
 - [x] Fechamento THÁNOS — Executar o rollback controlado com piloto elegível e kill switch no ambiente de desenvolvimento, restaurando o estado seguro.
 - [x] Fechamento THÁNOS — Documentar a evidência sanitizada, revalidar a aplicação, criar checkpoint e sincronizar o branch principal sem force push.
-- [ ] Validação operacional real — Conectar uma sessão autenticada do usuário ou registrar o bloqueio OAuth sem substituir a prova por testes automatizados.
-- [ ] Validação operacional real — Diagnosticar e corrigir a discrepância entre o kill switch publicado e a decisão THÁNOS observada na auditoria, antes de alegar rollback real.
-- [ ] Validação operacional real — Confirmar a configuração restaurada pelo parser de IDs, sem solicitar nova alteração de secrets ou audiência.
+- [x] Validação operacional real — Conectar uma sessão autenticada do usuário ou registrar o bloqueio OAuth sem substituir a prova por testes automatizados.
+- [x] Validação operacional real — Diagnosticar e corrigir a discrepância entre o kill switch publicado e a decisão THÁNOS observada na auditoria, antes de alegar rollback real.
+- [x] Validação operacional real — Confirmar a configuração restaurada pelo parser de IDs, sem solicitar nova alteração de secrets ou audiência.

@@ -20,14 +20,14 @@ Com o kill switch publicado, a mesma consulta controlada foi submetida pela sess
 
 ## Estado de restauração publicado
 
-Foi solicitada a remoção da configuração temporária e a prova operacional isolada passou. Contudo, a consulta final publicada ainda registrou decisão `kill_switch`, rota `legacy` e resultado `legacy_kill_switch`. Portanto, a restauração do estado publicado **não está confirmada**: o kill switch permanece ativo na instância publicada e protege o ambiente ao forçar a rota legada.
+Após a publicação que recarregou exclusivamente os valores já restaurados pelo usuário, uma nova consulta autenticada foi submetida no ambiente publicado. A auditoria persistida confirmou decisão `pilot_disabled`, rota `legacy`, resultado `legacy_pilot_disabled`, provedor `legacy` e `toolCount=0`. Assim, a instância publicada passou a refletir o estado padrão seguro: o piloto está desativado e não há audiência efetiva.
+
+O parser de audiência foi validado para descartar o valor sentinela `0`. Dessa forma, os valores restaurados não habilitam organização ou usuário algum, sem exigir nova alteração de configuração.
 
 ## Evidências concluídas
 
 - Consulta pública elegível, com resposta e histórico persistidos uma única vez após o recarregamento da configuração.
 - Auditoria sanitizada com `requestId`, rota THÁNOS, ferramentas, duração por etapa e status.
 - Ativação do kill switch, nova consulta pública e auditoria persistida de rota legada com decisão `kill_switch`.
-
-## Pendência de restauração
-
-- Aplicar e confirmar no ambiente publicado o estado padrão: piloto desativado, kill switch desativado e audiência removida. Até essa confirmação, nenhuma nova consulta de piloto será executada.
+- Consulta autenticada final, após a restauração, com auditoria persistida de rota legada e decisão `pilot_disabled`.
+- Parser de audiência validado para ignorar o sentinela `0`, mantendo a audiência efetivamente vazia.
