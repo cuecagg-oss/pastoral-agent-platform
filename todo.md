@@ -155,7 +155,11 @@
 - [x] Fase B — Implementar o registro fechado de workspaces e skills, com apenas `pastoral` registrado e negação explícita de chaves desconhecidas.
 - [x] Fase B — Implementar o adaptador Pastoral que resolve identidade, permissões, canal e requestId exclusivamente a partir de contexto autenticado server-side.
 - [x] Fase B — Cobrir construção, negação e compatibilidade do contexto THÁNOS sem mudar procedimentos tRPC ou componentes React existentes.
-- [ ] Fase C — Extrair infraestrutura central com adaptadores compatíveis e rollback por fachada.
+- [x] Fase C — Extrair infraestrutura central com adaptadores compatíveis e rollback por fachada.
+- [x] Fase C — Definir portas genéricas para política, catálogo, execução de ferramenta, geração de resposta e auditoria sem importar o domínio Pastoral no núcleo.
+- [x] Fase C — Implementar orquestrador central de uma etapa com contexto THÁNOS, gate de capability e decisões auditáveis, sem habilitar escrita multi-step.
+- [x] Fase C — Criar fachada Pastoral compatível para preservar os contratos públicos existentes e permitir rollback interno por delegação.
+- [x] Fase C — Cobrir a infraestrutura central com testes de portas, negação de capability, auditoria sanitizada e equivalência da fachada.
 - [ ] Fase D — Converter o Pastoral em workspace, skill e ferramentas declaradas.
 - [ ] Fase E — Implementar e validar piloto multi-step somente leitura com no máximo três ferramentas autorizadas.
 - [ ] Fase F — Validar integralmente, documentar e estabilizar a arquitetura THÁNOS.

@@ -54,3 +54,5 @@ Antes de cada extração, a suíte integral, a checagem de tipos e o build de pr
 | Chaves da auditoria administrativa | Corrigido e aprovado | A lista agora usa `eventKey` sanitizado e estável, derivado do identificador interno somente no servidor; a integração verifica unicidade sem expor o ID bruto. |
 | Contexto THÁNOS | Aprovado | `workspaceKey`, `tenantId` e `domain` são tipos de marca distintos; o adaptador Pastoral deriva os três no servidor e ignora campos homônimos fora do contrato. |
 | Registro de workspace e skill | Aprovado | O registro fechado contém somente o workspace `pastoral` e a skill `pastoral-assistant`; chaves desconhecidas e associações cruzadas são negadas explicitamente. |
+| Orquestração central de leitura | Aprovado | `ThanosReadOrchestrator` recebe somente portas genéricas, exige capability antes da ferramenta, preserva `requestId` e audita decisões sem incluir prompt ou evidência. |
+| Fachada Pastoral | Aprovado | `PastoralThanosFacade` adapta o núcleo ao contrato `AgentResponse`, executa a ferramenta uma única vez e permanece desacoplada do caminho público atual para rollback por delegação. |
