@@ -1,0 +1,25 @@
+# Project TODO
+
+- [x] Modelar organizações, memberships e o vínculo de tenant derivado exclusivamente da sessão autenticada.
+- [x] Criar entidades persistentes para conversas, mensagens, células, líderes, membros, visitantes, reuniões, presença, relatórios, acompanhamentos e eventos de auditoria.
+- [x] Criar dados de demonstração isolados para Igreja Demonstração A e Igreja Demonstração B.
+- [x] Implementar helpers e procedimentos tRPC que garantam autorização multi-tenant no servidor.
+- [x] Implementar o Agent Core no backend com contexto autenticado, Tool Registry, Policy Engine e logs sem chain-of-thought.
+- [x] Implementar Model Router desacoplado com adaptadores configuráveis para OpenAI, Anthropic, Gemini e OpenRouter, incluindo fallback determinístico sem credenciais.
+- [x] Implementar Read Tools pastorais: consultar_celulas, consultar_relatorios, consultar_presenca, consultar_visitantes e consultar_lideres.
+- [x] Implementar Write Tool registrar_acompanhamento_visitante com prévia, confirmação, idempotência e audit log.
+- [x] Implementar persistência e consulta do histórico de conversas por tenant e usuário.
+- [x] Construir telas de acesso, dashboard e chat utilizando os componentes preexistentes do template quando apropriado.
+- [x] Adicionar controle de gravação de voz, upload, transcrição configurável e reprodução TTS sem acoplar a conversa aos provedores.
+- [x] Cobrir isolamento cross-tenant, ferramentas, confirmação, idempotência e audit log com testes Vitest.
+- [x] Executar migrações, testes, checagem de tipos, build e verificação visual desktop/mobile do fluxo principal.
+- [ ] Atualizar notas concisas de implementação, salvar checkpoint e entregar o MVP utilizável.
+- [x] Ajustar e validar a experiência prioritária em celular para acesso, dashboard, chat, gravação, confirmação e leitura em voz alta.
+- [x] Validar as consultas autenticadas de dashboard, conversa e mensagens com evidência de sucesso, estados de carregamento, vazio e erro em tela móvel.
+- [x] Cobrir o VoiceProvider configurável e seu fallback em testes, incluindo a auditoria de sucesso e falha da transcrição.
+- [x] Refinar a tela de acesso Manus para celular, tornando a primeira experiência coerente com a identidade visual pastoral do MVP.
+- [x] Adicionar teste explícito de isolamento cross-tenant para conversas, mensagens e dados pastorais.
+- [x] Cobrir os estados vazio e erro do dashboard e do chat no cliente sem depender de carregamento indefinido.
+- [x] Testar a seleção do VoiceProvider para configuração padrão e valor inválido, documentando o fallback suportado.
+- [ ] Registrar como pendente a validação manual em dispositivo real dos fluxos de microfone, confirmação de escrita e síntese de voz.
+- [x] Adicionar e validar um estado vazio explícito no dashboard para uma igreja sem registros pastorais.

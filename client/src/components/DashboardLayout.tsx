@@ -21,15 +21,15 @@ import {
 } from "@/components/ui/sidebar";
 import { startLogin } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
-import { LayoutDashboard, LogOut, PanelLeft, Users } from "lucide-react";
+import { ArrowRight, HeartHandshake, LayoutDashboard, LogOut, MessageCircleHeart, PanelLeft, ShieldCheck } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
 import { Button } from "./ui/button";
 
 const menuItems = [
-  { icon: LayoutDashboard, label: "Page 1", path: "/" },
-  { icon: Users, label: "Page 2", path: "/some-path" },
+  { icon: LayoutDashboard, label: "Visão geral", path: "/" },
+  { icon: MessageCircleHeart, label: "Assistente Pastoral", path: "/assistente" },
 ];
 
 const SIDEBAR_WIDTH_KEY = "sidebar-width";
@@ -58,23 +58,32 @@ export default function DashboardLayout({
 
   if (!user) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="flex flex-col items-center gap-8 p-8 max-w-md w-full">
-          <div className="flex flex-col items-center gap-6">
-            <h1 className="text-2xl font-semibold tracking-tight text-center">
-              Sign in to continue
-            </h1>
-            <p className="text-sm text-muted-foreground text-center max-w-sm">
-              Access to this dashboard requires authentication. Continue to launch the login flow.
-            </p>
+      <div className="relative flex min-h-[100dvh] items-center justify-center overflow-hidden bg-[#fbfaf6] px-5 py-8">
+        <div className="absolute -left-20 top-12 size-64 rounded-full bg-[#dfeade] blur-3xl" />
+        <div className="absolute -bottom-24 -right-16 size-72 rounded-full border-[28px] border-[#e5cf78]/30" />
+        <div className="relative w-full max-w-md rounded-[2rem] border border-[#e7e1d4] bg-white/90 p-7 shadow-[0_24px_70px_rgba(23,59,52,0.12)] backdrop-blur md:p-9">
+          <div className="flex size-14 items-center justify-center rounded-2xl bg-[#173b34] text-[#eedc9a] shadow-lg">
+            <HeartHandshake className="size-7" />
+          </div>
+          <p className="mt-7 text-xs font-semibold uppercase tracking-[0.17em] text-[#56705e]">Assistente Pastoral</p>
+          <h1 className="mt-3 font-['Fraunces'] text-4xl font-semibold leading-tight tracking-tight text-[#173b34]">
+            Cuidado e organização para sua igreja.
+          </h1>
+          <p className="mt-4 text-sm leading-6 text-[#607066]">
+            Entre para consultar os dados da sua organização, acompanhar pessoas e conversar com o assistente em um ambiente protegido.
+          </p>
+          <div className="mt-6 flex items-start gap-3 rounded-2xl bg-[#f5f1e5] p-4 text-sm text-[#466052]">
+            <ShieldCheck className="mt-0.5 size-5 shrink-0 text-[#24714d]" />
+            <span>As consultas respeitam o contexto da sua igreja e as ações sensíveis pedem confirmação.</span>
           </div>
           <Button
             onClick={() => startLogin()}
             size="lg"
-            className="w-full shadow-lg hover:shadow-xl transition-all"
+            className="mt-7 h-12 w-full bg-[#173b34] text-white shadow-lg transition-all hover:bg-[#214c43] hover:shadow-xl"
           >
-            Sign in
+            Entrar com Manus <ArrowRight className="ml-2 size-4" />
           </Button>
+          <p className="mt-5 text-center text-xs leading-5 text-muted-foreground">Acesso por sessão segura do Manus OAuth.</p>
         </div>
       </div>
     );
@@ -169,7 +178,7 @@ function DashboardLayoutContent({
               {!isCollapsed ? (
                 <div className="flex items-center gap-2 min-w-0">
                   <span className="font-semibold tracking-tight truncate">
-                    Navigation
+                    Assistente Pastoral
                   </span>
                 </div>
               ) : null}
@@ -224,7 +233,7 @@ function DashboardLayoutContent({
                   className="cursor-pointer text-destructive focus:text-destructive"
                 >
                   <LogOut className="mr-2 h-4 w-4" />
-                  <span>Sign out</span>
+                  <span>Sair da conta</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -242,14 +251,14 @@ function DashboardLayoutContent({
 
       <SidebarInset>
         {isMobile && (
-          <div className="flex border-b h-14 items-center justify-between bg-background/95 px-2 backdrop-blur supports-[backdrop-filter]:backdrop-blur sticky top-0 z-40">
+          <div className="flex border-b h-14 items-center justify-between bg-background/95 px-3 backdrop-blur supports-[backdrop-filter]:backdrop-blur sticky top-0 z-40">
             <div className="flex items-center gap-2">
               <SidebarTrigger className="h-9 w-9 rounded-lg bg-background" />
-              <div className="flex items-center gap-3">
-                <div className="flex flex-col gap-1">
-                  <span className="tracking-tight text-foreground">
-                    {activeMenuItem?.label ?? "Menu"}
-                  </span>
+              <div className="flex items-center gap-2">
+                <div className="flex size-7 items-center justify-center rounded-lg bg-[#173b34] text-[#eedc9a]"><HeartHandshake className="size-4" /></div>
+                <div className="flex flex-col leading-none">
+                  <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#56705e]">Pastoral</span>
+                  <span className="mt-1 text-sm font-medium tracking-tight text-foreground">{activeMenuItem?.label ?? "Visão geral"}</span>
                 </div>
               </div>
             </div>
