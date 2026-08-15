@@ -45,3 +45,19 @@ it("valida o contrato da configuração temporária sem expor allowlists", () =>
   expect(runtime.organizationIds).toEqual([]);
   expect(runtime.userIds).toEqual([]);
 });
+
+it("mantém o ambiente restaurado fora da audiência do piloto", () => {
+  const runtime = resolveThanosPilotRuntimeConfig({
+    enabled: "false",
+    killSwitch: "false",
+    organizationIds: "0",
+    userIds: "0",
+    version: "thanos-read-pilot-v1",
+  });
+
+  expect(runtime.enabled).toBe(false);
+  expect(runtime.killSwitch).toBe(false);
+  expect(runtime.organizationIds).toEqual([]);
+  expect(runtime.userIds).toEqual([]);
+  expect(runtime.version).toBe("thanos-read-pilot-v1");
+});
