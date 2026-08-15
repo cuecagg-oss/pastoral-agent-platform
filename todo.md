@@ -79,3 +79,8 @@
 - [x] Adicionar regressão explícita para um segundo usuário da mesma organização que tente ler uma mensagem de voz em conversa alheia.
 - [x] Criar um repositório privado no GitHub e adicionar o remoto de espelhamento sem substituir o remoto interno de publicação.
 - [x] Enviar o branch principal atual ao GitHub e verificar a disponibilidade do repositório privado.
+- [x] Verificar diretamente no GitHub a existência, a visibilidade e o conteúdo do repositório privado reportado como ausente.
+- [x] Corrigir ou orientar o acesso ao repositório GitHub caso haja divergência de organização, permissões ou branch padrão.
+- [x] Comparar em modo leitura a organização `cuecagg-oss`, a lista de repositórios acessíveis e a identidade do projeto Assistente Pastoral antes de alterar a visibilidade.
+- [x] Tornar público, com confirmação explícita do usuário, o repositório correto `cuecagg-oss/pastoral-agent-platform`.
+- [x] Verificar o acesso anônimo ao repositório público e confirmar o branch principal disponível.
