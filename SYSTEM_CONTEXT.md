@@ -24,6 +24,8 @@ O sistema opera por organização. A sessão identifica o usuário; a membership
 
 ## Variáveis e configuração
 
-Configuração de provedores é server-side. A futura configuração Hermes utilizará nomes de variáveis documentados, mas nunca valores expostos na aplicação: `HERMES_ENABLED`, `HERMES_BASE_URL`, `HERMES_API_KEY`, `HERMES_MODEL` e `HERMES_TIMEOUT_MS`.
+Configuração de provedores é exclusivamente server-side. O Gateway usa `AGENT_GATEWAY_ENABLED`, `AGENT_GATEWAY_PROVIDER` e `AGENT_GATEWAY_MODEL`; Hermes usa `HERMES_ENABLED`, `HERMES_MODEL`, `HERMES_BASE_URL`, `HERMES_API_KEY`, `HERMES_TIMEOUT_MS`, `HERMES_RETRIES`, `HERMES_CIRCUIT_FAILURE_THRESHOLD` e `HERMES_CIRCUIT_COOLDOWN_MS`. O n8n é controlado por `N8N_ENABLED` e `N8N_ALLOWED_WORKFLOWS`. Estes nomes documentam controles, nunca valores.
+
+Hermes e n8n iniciam desativados. Hermes só opera por caminho opt-in, timeout, retries limitados, circuit breaker e fallback local; n8n somente reconhece workflows allowlisted e não aceita URL, webhook ou carga arbitrária nesta versão.
 
 Preferências administrativas por organização podem apenas restringir ou habilitar capacidades já allowlisted. Elas não podem criar providers, definir URLs, informar chaves, trocar modelos globais ou criar ferramentas arbitrárias.

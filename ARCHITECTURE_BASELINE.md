@@ -1,8 +1,8 @@
 # Baseline de Arquitetura
 
-## Propósito
+## Propósito e estado consolidado
 
-Este documento descreve o estado verificável do Assistente Pastoral antes da evolução para Agent Gateway, Dashboard inteligente e Configurações administrativas. Ele é a referência de compatibilidade: nenhuma entrega posterior pode reduzir o isolamento por organização, expor transcrições, segredos ou raciocínio interno, nem eliminar o caminho atual de atendimento quando provedores novos estiverem indisponíveis.
+Este documento descreve o estado verificável do Assistente Pastoral após a evolução de Gateway, catálogo declarativo, auditoria enriquecida, Dashboard gerencial e Configurações administrativas. Ele permanece a referência de compatibilidade: nenhuma entrega posterior pode reduzir o isolamento por organização, expor transcrições, segredos ou raciocínio interno, nem eliminar o caminho local quando provedores novos estiverem indisponíveis.
 
 ## Componentes atuais
 
@@ -11,10 +11,11 @@ Este documento descreve o estado verificável do Assistente Pastoral antes da ev
 | Autenticação | Manus OAuth e cookie de sessão seguro de primeira parte. | A identidade do usuário só é derivada da sessão validada pelo servidor. |
 | Multi-tenant | Organizações, memberships e `organizationId` em entidades pastorais. | O cliente nunca escolhe o tenant como fonte de autoridade. |
 | Chat | Conversas persistentes, propriedade por usuário e histórico isolado. | Um segundo usuário, mesmo da mesma igreja, não lê conversas alheias. |
-| Agent Core | Política, ferramentas autorizadas, Model Router e fallback determinístico. | Nenhum modelo ganha acesso direto a SQL, repositórios ou rotas internas. |
+| Agent Gateway e Agent Core | Gateway por tenant, política, Model Router, fallback local e catálogo declarativo de ferramentas. | Nenhum modelo ganha acesso direto a SQL, repositórios ou rotas internas. |
 | Voz | Áudio privado, transcrição interna, marcador de voz sem texto reconhecido e TTS do navegador. | Áudio e transcrição não entram em mensagens visíveis ou auditoria. |
-| Auditoria | Eventos operacionais de ferramentas e voz, sem chain-of-thought. | Logs permanecem sanitizados e filtrados por tenant. |
-| Dashboard | Métricas gerenciais da igreja atual e estados de carregamento, vazio e erro. | A tela continua a visão gerencial principal, não é substituída por chat. |
+| Auditoria | Eventos de ferramenta, voz e Hermes com `requestId`, resultado, confirmação e provedor/modelo, sem chain-of-thought. | Logs permanecem sanitizados e filtrados por tenant. |
+| Dashboard | Métricas gerenciais, tendências, pendências com escopo declarado e insights determinísticos. | A tela continua a visão gerencial principal, não é substituída por chat ou IA generativa. |
+| Configurações | Área administrativa por papel para status e controles allowlisted. | Nenhum segredo, URL sensível, tool ou workflow arbitrário é criado pela interface. |
 
 ## Fluxos obrigatórios
 
@@ -24,7 +25,7 @@ flowchart LR
   C --> T[TenantContext]
   T --> G[Agent Gateway]
   G --> P[Policy Engine]
-  P --> R[Tool Registry allowlisted]
+  P --> R[Tool Registry declarativo allowlisted]
   G --> F[Fallback Agent Core]
   R --> DB[(Banco isolado por tenant)]
   G --> A[Audit log sanitizado]
@@ -42,6 +43,6 @@ O fluxo de voz utiliza a mesma cadeia depois da transcrição privada. Antes de 
 | Segredos | Chaves, URLs sensíveis, variáveis de ambiente e objetos de erro brutos não são serializados para a UI, logs ou auditoria. |
 | Automação externa | Começa desativada, allowlisted e sem URLs ou workflows arbitrários. |
 
-## Critério de compatibilidade
+## Critério de compatibilidade e rollback
 
-Com Hermes desativado, indisponível ou inválido, o comportamento de texto e voz deve continuar a usar o Agent Core atual. O Dashboard tradicional deve continuar disponível se a camada inteligente falhar. Toda migração será aditiva e reversível logicamente por feature flag.
+Com Hermes desativado, indisponível ou inválido, o comportamento de texto e voz continua a usar o Agent Core local. O Dashboard tradicional continua disponível se a camada inteligente falhar. O n8n fica sem execução externa enquanto desativado. Toda migração é aditiva e reversível logicamente por configuração, com `AGENT_GATEWAY_PROVIDER=legacy`, `HERMES_ENABLED=false` e `N8N_ENABLED=false` como retorno operacional seguro.

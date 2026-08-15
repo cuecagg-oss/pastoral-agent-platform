@@ -81,3 +81,11 @@ Após confirmação explícita do usuário, a visibilidade foi alterada para pú
 ## Validação final de sessão móvel
 
 O usuário confirmou em dispositivo móvel que a sessão permaneceu ativa após o login Manus OAuth, a atualização da página e a alternância entre o dashboard e o Assistente Pastoral. Assim, a correção de cookies de primeira parte, `Secure` obrigatório em produção e proteção contra redirecionamentos OAuth concorrentes foi validada no fluxo real. Como não houve nova expiração, não foi necessária a instrumentação condicional para distinguir bloqueio de cookies, ausência pós-callback ou incompatibilidade de navegador.
+
+## Evolução arquitetural e validação consolidada
+
+A evolução posterior consolidou o `AgentGateway` por tenant, o catálogo declarativo de ferramentas, a configuração persistida por organização, confirmações idempotentes e auditoria enriquecida com `requestId`, resultado, confirmação e provedor/modelo. Os controles administrativos foram mantidos sanitizados: chaves, URLs internas, prompts privados, transcrições e erros brutos não foram retornados à interface nem incluídos na auditoria.
+
+Hermes foi implementado como caminho opt-in, com timeout, retries limitados, circuit breaker, resposta estruturada e fallback obrigatório ao `AgentCore` local. O n8n continua desativado por padrão, com allowlist de identificadores e sem URL, webhook ou workflow arbitrário. O Dashboard passou a combinar métricas tradicionais, tendências, pendências com escopo declarado e uma camada inteligente determinística somente leitura; a área de Configurações passou a exigir papel administrativo tanto na interface quanto no servidor.
+
+Na validação de encerramento, a regressão Vitest aprovou **74 testes em 25 arquivos**, a checagem TypeScript e o build de produção concluíram sem erros, e a auditoria de dependências não encontrou vulnerabilidades conhecidas. Foram feitas inspeções visuais de Dashboard, Assistente Pastoral e Configurações em desktop e celular. O checkpoint de referência é `1ef5db45`; o ambiente publicado permanece acessível em [pastoralai-js2vazr4.manus.space](https://pastoralai-js2vazr4.manus.space).

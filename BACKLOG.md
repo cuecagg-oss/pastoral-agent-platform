@@ -5,8 +5,18 @@
 1. Agent Gateway com provider nulo e fallback preservado.
 2. Registro declarativo de ferramentas e ferramentas piloto de leitura/escrita.
 3. Confirmação genérica com idempotência e auditoria sanitizada.
-4. Hermes resiliente desativado por padrão e n8nConnector sem execução externa.
-5. Dashboard tradicional normalizado, Camada inteligente somente leitura e Configurações administrativas por papel.
+4. Auditoria enriquecida com `requestId`, resultado, provedor/modelo e estado de confirmação, sem conteúdo sensível.
+5. Hermes resiliente e opt-in, com retries, circuit breaker, fallback local e estado sanitizado; n8n governado e sem execução externa.
+6. Dashboard tradicional normalizado, Camada inteligente determinística somente leitura e Configurações administrativas por papel.
+
+## Próximas decisões antes de qualquer ativação externa
+
+| Item | Condição de entrada |
+|---|---|
+| Ativar Hermes em um tenant | Aprovar contrato HTTP, modelo, política de dados enviados, monitoramento de latência/erro e plano de rollback. |
+| Ativar n8n | Aprovar workflow específico, destino, assinatura, payload, retentativa e responsável operacional. |
+| Ampliar ferramentas de escrita | Revisar categoria, schema, papéis, confirmação, idempotência e cobertura de auditoria. |
+| Insights generativos | Definir política de privacidade, escopo factual, explicabilidade e fallback determinístico. |
 
 ## Fora do escopo desta versão
 

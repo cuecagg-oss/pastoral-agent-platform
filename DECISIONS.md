@@ -10,12 +10,16 @@
 | ADR-006 | Preparar Hermes e n8n com opt-in, diagnóstico sanitizado e desativação por padrão. | Aprovada | Não há saída externa arbitrária ou segredo exposto. |
 | ADR-007 | Configurações administrativas serão declarativas e allowlisted. | Aprovada | Admin não cria tools, modelos, URLs ou workflows arbitrários. |
 | ADR-008 | Auditoria registra decisão e resultado, não conteúdos privados ou raciocínio interno. | Aprovada | Operabilidade sem ampliar superfície de dados sensíveis. |
+| ADR-009 | Tratar habilitações de ferramentas como overrides por organização somente para catálogo conhecido. | Aprovada | Administração ajusta escopo permitido sem criar código executável ou ferramentas novas. |
+| ADR-010 | Propagar `requestId` e estado de confirmação na resposta e na auditoria. | Aprovada | Uma operação pode ser correlacionada sem confundir rastreio com chave de idempotência. |
+| ADR-011 | Calcular Dashboard no servidor com escopo temporal ou operacional declarado por indicador. | Aprovada | Métricas e pendências não dependem de interpretações ocultas do cliente. |
+| ADR-012 | Restringir Configurações à leitura sanitizada e a mutações allowlisted para administradores. | Aprovada | A interface não se torna um console de segredos, URLs ou automação arbitrária. |
 
 ## Decisões pendentes
 
 | Tema | Decisão necessária antes de ativar em produção |
 |---|---|
-| Contrato HTTP Hermes | Confirmar endpoint, método, headers permitidos e formato de resposta estruturada. |
+| Contrato HTTP Hermes | Confirmar endpoint, método, headers permitidos, formato de resposta estruturada e política de dados antes de ativar em produção. |
 | Papéis administrativos | Formalizar a semântica de `superadmin` e a matriz completa de permissões. |
 | Tendências do Dashboard | Definir período padrão, timezone de negócio e base mínima para comparação. |
 | n8n | Aprovar eventos, destino, assinatura e política de retentativa antes de habilitar qualquer workflow. |
