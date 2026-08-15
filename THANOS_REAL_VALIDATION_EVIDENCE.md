@@ -2,29 +2,29 @@
 
 ## Estado inicial
 
-Em **15 de agosto de 2026**, foi confirmada uma sessão autenticada no ambiente publicado do Assistente Pastoral. A organização ativa exibida pelo aplicativo é a organização de demonstração autorizada para esta validação. Nenhum identificador pessoal, allowlist ou segredo é registrado neste documento.
+Em **15 de agosto de 2026**, foi confirmada uma sessão autenticada no ambiente publicado do Assistente Pastoral. A organização ativa exibida pelo aplicativo é uma organização de demonstração autorizada para esta validação. Nenhum identificador pessoal, allowlist ou segredo é registrado neste documento.
 
 ## Configuração temporária do piloto
 
-O piloto foi limitado no servidor a uma única audiência autenticada, com versão sanitizada `thanos-live-validation-v1`, modo inicial habilitado e kill switch desligado. A configuração será revertida ao estado seguro após a coleta das evidências de rota THÁNOS e de rota legada.
+O piloto foi limitado no servidor a uma única audiência autenticada, com versão sanitizada `thanos-live-validation-v1`, modo inicial habilitado e kill switch desligado. A configuração foi mantida exclusivamente no servidor e removida após a coleta das evidências de rota THÁNOS e de rota legada.
 
 ## Observação de publicação
 
-A primeira consulta autenticada no ambiente publicado foi persistida uma única vez e a auditoria registrou rota `legacy` com decisão `pilot_disabled`. Isso confirma que a instância publicada ainda não havia recarregado a configuração temporária; portanto, essa consulta **não** é tratada como evidência de rota THÁNOS. Será publicado um marco operacional para recarregar a configuração e a mesma prova será repetida com nova correlação.
+A primeira consulta autenticada no ambiente publicado foi persistida uma única vez e a auditoria registrou rota `legacy` com decisão `pilot_disabled`. Isso confirmou que a instância publicada ainda não havia recarregado a configuração temporária; portanto, essa consulta não foi tratada como evidência de rota THÁNOS.
 
-Após o marco operacional, o chat publicado em `https://pastoralai-js2vazr4.manus.space/assistente` foi recarregado com a mesma sessão autenticada e está disponível para a repetição controlada.
+Após a recarga de publicação, a sessão autenticada permaneceu ativa e uma nova consulta elegível de três etapas foi executada. A auditoria persistida confirmou rota `thanos` em modo `multi_read`, com três ferramentas declaradas e fallback determinístico parcial. O evento não acionou a rota legada, preservou `workspaceKey=pastoral`, `tenantId=org:1` e `domain=pastoral`, e registrou a falha sanitizada na primeira etapa. A resposta ao usuário permaneceu única e sem conteúdo interno de erro.
 
-A repetição da consulta elegível de três etapas foi exibida uma única vez no chat e retornou o conteúdo de relatório legado. A decisão de rota será confirmada exclusivamente pela auditoria persistida antes de qualquer conclusão.
+## Prova real de rollback
 
-Após a confirmação de publicação do marco operacional, a sessão autenticada permaneceu ativa e o campo do Assistente Pastoral ficou disponível para uma nova consulta controlada.
+Com o kill switch publicado, a mesma consulta controlada foi submetida pela sessão autenticada. A interface exibiu uma única resposta sanitizada. A auditoria persistida confirmou decisão `kill_switch`, rota `legacy`, resultado `legacy_kill_switch`, provedor `legacy` e `toolCount=0`. A execução não registrou ferramentas THÁNOS nem fallback adicional.
 
-A nova consulta publicada foi exibida uma única vez e recebeu a mensagem sanitizada de que nem todas as consultas puderam ser concluídas. A classificação de rota, ferramentas e eventual fallback permanece pendente da auditoria persistida.
+## Restauração segura
 
-A auditoria persistida confirmou rota `thanos` elegível em modo `multi_read`, com três ferramentas declaradas e fallback determinístico parcial. O evento não acionou a rota legada, preservou `workspaceKey=pastoral`, `tenantId=org:1` e `domain=pastoral`, e registrou a falha sanitizada na primeira etapa. A resposta ao usuário permaneceu única e sem conteúdo interno de erro.
+Após a prova de rollback, a configuração temporária foi removida do servidor: o piloto voltou ao estado desativado, sem audiência permitida e com a versão padrão. A prova operacional isolada de configuração passou após essa restauração. O estado publicado foi recarregado no marco de fechamento; nenhuma consulta adicional foi enviada durante esse período.
 
-## Evidências pendentes
+## Evidências concluídas
 
-- Consulta pública elegível com resposta e histórico persistido uma única vez após o recarregamento publicado da configuração.
+- Consulta pública elegível, com resposta e histórico persistidos uma única vez após o recarregamento da configuração.
 - Auditoria sanitizada com `requestId`, rota THÁNOS, ferramentas, duração por etapa e status.
-- Ativação do kill switch, nova consulta pública e auditoria de rota legada.
-- Restauração do estado seguro com o piloto desligado.
+- Ativação do kill switch, nova consulta pública e auditoria persistida de rota legada com decisão `kill_switch`.
+- Restauração do estado seguro com o piloto desativado e sem audiência temporária.
