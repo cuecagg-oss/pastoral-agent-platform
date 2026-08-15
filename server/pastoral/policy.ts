@@ -3,6 +3,7 @@ import type { TenantContext, TenantRole, ToolCatalogEntry } from "./types";
 
 const writeRoles: TenantRole[] = ["admin", "pastor", "supervisor"];
 const administrativeRoles: TenantRole[] = ["admin"];
+const dashboardRoles: TenantRole[] = ["admin", "pastor", "supervisor", "leader"];
 
 export class TenantIsolationError extends TRPCError {
   constructor() {
@@ -33,6 +34,12 @@ export function assertTenantScope(context: TenantContext, resourceOrganizationId
 
 export function assertFollowupPermission(context: TenantContext) {
   if (!writeRoles.includes(context.role)) {
+    throw new AuthorizationError();
+  }
+}
+
+export function assertDashboardPermission(context: TenantContext) {
+  if (!dashboardRoles.includes(context.role)) {
     throw new AuthorizationError();
   }
 }

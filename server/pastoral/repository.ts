@@ -5,6 +5,7 @@ import {
   conversationMessages,
   conversations,
   leaders,
+  members,
   meetings,
   organizationMemberships,
   organizations,
@@ -16,6 +17,7 @@ import {
 import { getDb } from "../db";
 import { assertTenantScope, TenantIsolationError } from "./policy";
 import { ensureCurrentUserMembership, ensureDemoData } from "./seed";
+import { buildDashboardOverview } from "./dashboardService";
 import type { PastoralRepository, TenantContext, ToolResult, VisitorCandidate } from "./types";
 
 function requireDb<T>(value: T | null): T {
@@ -67,12 +69,28 @@ export async function listMessages(context: TenantContext, conversationId: numbe
 
 export async function dashboardSummary(context: TenantContext) {
   const db = requireDb(await getDb());
-  const [cells, pendingReports, openVisitors] = await Promise.all([
+  const [cells, reportsForTenant, visitorsForTenant, meetingsForTenant, leadersForTenant, membersForTenant] = await Promise.all([
     db.select().from(churchCells).where(eq(churchCells.organizationId, context.organizationId)),
-    db.select().from(reports).where(and(eq(reports.organizationId, context.organizationId), eq(reports.delivered, false))),
-    db.select().from(visitors).where(and(eq(visitors.organizationId, context.organizationId), eq(visitors.followedUp, false))),
+    db.select().from(reports).where(eq(reports.organizationId, context.organizationId)),
+    db.select().from(visitors).where(eq(visitors.organizationId, context.organizationId)),
+    db.select().from(meetings).where(eq(meetings.organizationId, context.organizationId)),
+    db.select().from(leaders).where(eq(leaders.organizationId, context.organizationId)),
+    db.select().from(members).where(eq(members.organizationId, context.organizationId)),
   ]);
-  return { cells: cells.length, pendingReports: pendingReports.length, openVisitors: openVisitors.length };
+  const overview = buildDashboardOverview({
+    cells,
+    reports: reportsForTenant,
+    visitors: visitorsForTenant,
+    meetings: meetingsForTenant,
+    leaders: leadersForTenant,
+    memberCount: membersForTenant.length,
+  });
+  return {
+    cells: overview.metrics.activeCells,
+    pendingReports: overview.pending.pendingReports,
+    openVisitors: overview.pending.visitorsWithoutFollowup,
+    overview,
+  };
 }
 
 export class DatabasePastoralRepository implements PastoralRepository {

@@ -108,3 +108,68 @@ export type AgentResponse = {
     idempotencyKey: string;
   };
 };
+
+export type DashboardTrend = {
+  status: "available" | "insufficient_data";
+  direction?: "up" | "down" | "stable";
+  currentValue: number;
+  previousValue: number;
+  percentageChange?: number;
+  reason?: string;
+};
+
+export type DashboardInsight = {
+  id: "pending_reports" | "visitor_followup" | "missed_meetings" | "leader_attention" | "all_clear";
+  title: string;
+  priority: "high" | "medium" | "info";
+  summary: string;
+  periodLabel: string;
+  metrics: Record<string, number>;
+};
+
+export type DashboardPendingScope = {
+  kind: "reporting_cycle" | "open_records" | "current_leadership_notes";
+  label: string;
+  explanation: string;
+};
+
+export type DashboardOverview = {
+  period: {
+    label: string;
+    startAt: Date;
+    endAt: Date;
+    days: number;
+  };
+  metrics: {
+    activeCells: number;
+    completedCells: number;
+    pendingCells: number;
+    totalAttendance: number;
+    averageAttendancePerCell: number | null;
+    visitors: number;
+    registeredPeople: number;
+    leaders: number;
+  };
+  pending: {
+    pendingReports: number;
+    missedMeetings: number;
+    visitorsWithoutFollowup: number;
+    leadersRequiringAttention: number;
+  };
+  pendingScopes: {
+    reports: DashboardPendingScope;
+    missedMeetings: DashboardPendingScope;
+    visitorsWithoutFollowup: DashboardPendingScope;
+    leadersRequiringAttention: DashboardPendingScope;
+  };
+  trends: {
+    attendance: DashboardTrend;
+    completedCells: DashboardTrend;
+  };
+  intelligence: {
+    mode: "rules";
+    generativeStatus: "unavailable";
+    unavailableReason: string;
+    insights: DashboardInsight[];
+  };
+};

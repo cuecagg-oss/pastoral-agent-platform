@@ -32,6 +32,18 @@ describe("Consultas pastorais autenticadas", () => {
 
     expect(dashboard.tenant).toMatchObject({ organizationId: 1, organizationName: "Igreja Demonstração A", userId: 1 });
     expect(dashboard.summary.cells).toBeGreaterThan(0);
+    expect(dashboard.overview.metrics).toMatchObject({
+      activeCells: 4,
+      completedCells: 3,
+      pendingCells: 2,
+      totalAttendance: 31,
+      averageAttendancePerCell: expect.closeTo(10.3, 1),
+      visitors: 3,
+      registeredPeople: 3,
+      leaders: 4,
+    });
+    expect(dashboard.overview.pending).toMatchObject({ pendingReports: 2, missedMeetings: 1, visitorsWithoutFollowup: 2, leadersRequiringAttention: 2 });
+    expect(dashboard.overview.intelligence.generativeStatus).toBe("unavailable");
     expect(conversation.organizationId).toBe(dashboard.tenant.organizationId);
     expect(Array.isArray(messages)).toBe(true);
   });
@@ -67,6 +79,8 @@ describe("Consultas pastorais autenticadas", () => {
 
     expect(dashboardB.tenant.organizationName).toBe("Igreja Demonstração B");
     expect(dashboardB.summary.cells).toBe(1);
+    expect(dashboardB.overview.metrics).toMatchObject({ activeCells: 1, totalAttendance: 16, registeredPeople: 0, leaders: 1 });
+    expect(dashboardB.overview.pending).toMatchObject({ pendingReports: 0, visitorsWithoutFollowup: 1 });
     expect(messagesA).toContainEqual(expect.objectContaining({ role: "user", messageType: "voice", content: "Mensagem de voz enviada." }));
     await expect(callerSameChurch.pastoral.messages({ conversationId: conversationA.id })).rejects.toMatchObject({ code: "FORBIDDEN" });
     await expect(callerB.pastoral.messages({ conversationId: conversationA.id })).rejects.toMatchObject({ code: "FORBIDDEN" });

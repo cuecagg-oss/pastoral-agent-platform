@@ -6,7 +6,7 @@ import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import { AgentCore } from "./pastoral/agentCore";
 import { AgentGateway } from "./pastoral/agentGateway";
 import { getN8nConnectorStatus } from "./pastoral/n8nConnector";
-import { assertAdministrativePermission } from "./pastoral/policy";
+import { assertAdministrativePermission, assertDashboardPermission } from "./pastoral/policy";
 import { getTenantGatewayConfig, toSanitizedTenantGatewayStatus, updateTenantGatewayConfig } from "./pastoral/tenantGatewayConfig";
 import { listSanitizedToolCatalog } from "./pastoral/toolCatalog";
 import { getTenantToolCatalog, updateTenantToolStatus } from "./pastoral/tenantToolConfig";
@@ -37,8 +37,9 @@ export const appRouter = router({
   pastoral: router({
     dashboard: protectedProcedure.query(async ({ ctx }) => {
       const tenant = await currentTenant(ctx.user.id);
+      assertDashboardPermission(tenant);
       const summary = await dashboardSummary(tenant);
-      return { tenant, summary, agent: toSanitizedTenantGatewayStatus(await getTenantGatewayConfig(tenant)) };
+      return { tenant, summary, overview: summary.overview, agent: toSanitizedTenantGatewayStatus(await getTenantGatewayConfig(tenant)) };
     }),
     agentSettings: protectedProcedure.query(async ({ ctx }) => {
       const tenant = await currentTenant(ctx.user.id);

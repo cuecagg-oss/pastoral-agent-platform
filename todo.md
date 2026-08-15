@@ -115,7 +115,13 @@
 - [x] Integrar Hermes ao fluxo de resposta como provedor opt-in com contrato estruturado validado e fallback ao Agent Core somente em indisponibilidade, timeout ou circuito aberto.
 - [x] Auditar cada tentativa de retry Hermes com requestId correlacionado, número da tentativa e falha sanitizada.
 - [x] Adicionar testes de integração tRPC para status e teste Hermes, incluindo autorização administrativa, sanitização e estado n8n.
-- [ ] Criar serviço do Dashboard para métricas, tendências, pendências e insights estritamente isolados por tenant e papel.
+- [x] Criar serviço do Dashboard para métricas, tendências, pendências e insights estritamente isolados por tenant e papel.
+- [x] Definir contrato versionado de resumo gerencial com células realizadas e pendentes, presença, média por célula, visitantes, pessoas cadastradas e líderes.
+- [x] Calcular tendências e pendências exclusivamente a partir dos registros do tenant, com janelas temporais ou escopos operacionais explícitos por indicador e sem inferências que revelem outros tenants.
+- [x] Produzir insights determinísticos, explicáveis e sem conteúdo sensível, incluindo estado de indisponibilidade para a futura camada inteligente.
+- [x] Expor o resumo por procedimento autenticado e cobrir métricas, tendências, pendências, insights e isolamento por tenant em testes de serviço e integração.
+- [x] Formalizar e testar a política de acesso ao Dashboard por papel, preservando a visão gerencial autorizada para cada membership autenticada.
+- [x] Declarar o escopo temporal de relatórios pendentes, visitantes sem retorno e observações de liderança, retornando o período ou motivo de escopo no contrato e nos testes.
 - [ ] Evoluir o Dashboard preservando a visão gerencial e acrescentando camada inteligente com estados de fallback.
 - [ ] Criar área administrativa de Configurações por papel para organização, usuários, IA, Hermes, voz, ferramentas, integrações e auditoria.
 - [ ] Cobrir segurança, isolamento, fallback, confirmação, Dashboard e Configurações com testes e verificação visual responsiva.
