@@ -12,9 +12,11 @@ export class AgentCore {
     private readonly modelRouter = new ModelRouter(),
   ) {}
 
-  async respond(input: { context: TenantContext; conversationId: number; message: string }): Promise<AgentResponse> {
+  async respond(input: { context: TenantContext; conversationId: number; message: string; persistUserMessage?: boolean }): Promise<AgentResponse> {
     const { context, conversationId, message } = input;
-    await this.repository.appendMessage({ conversationId, context, role: "user", content: message });
+    if (input.persistUserMessage !== false) {
+      await this.repository.appendMessage({ conversationId, context, role: "user", content: message });
+    }
 
     if (isFollowupIntent(message)) {
       try {

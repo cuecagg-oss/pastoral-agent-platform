@@ -57,3 +57,9 @@
 - [x] Adicionar verificação específica de que a invalidação do chat permanece limitada à conversa ativa.
 - [x] Corrigir a interpretação do agente quando a pergunta mencionar igrejas, sem responder indevidamente com métricas de células.
 - [x] Adicionar teste de regressão para perguntas sobre quantidade de igrejas e escopo multi-tenant do assistente.
+- [x] Transformar o envio de áudio em conversa por voz, mantendo a transcrição somente como etapa interna de interpretação.
+- [x] Reproduzir automaticamente em voz a resposta final do agente após uma interação por áudio, com fallback seguro quando o navegador não suportar síntese.
+- [ ] Cobrir o novo fluxo de voz com testes de interface e orientar a validação em dispositivo móvel.
+- [x] Adicionar tratamento robusto de TTS no cliente com callbacks de início e erro, além de tempo máximo para confirmar reprodução real antes de anunciar sucesso.
+- [x] Implementar fallback de voz seguro para navegadores sem síntese, desabilitando a reprodução e preservando a resposta textual no histórico.
+- [x] Cobrir em teste o início confirmado e o caminho de falha da reprodução automática de voz.

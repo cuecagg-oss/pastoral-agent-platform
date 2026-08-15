@@ -2,7 +2,8 @@ import type { Express, NextFunction, Request, Response } from "express";
 import multer from "multer";
 import { createContext } from "../_core/context";
 import { storageGetSignedUrl, storagePut } from "../storage";
-import { getTenantContextForUser, DatabasePastoralRepository } from "./repository";
+import { AgentCore } from "./agentCore";
+import { getOrCreateConversation, getTenantContextForUser, DatabasePastoralRepository } from "./repository";
 import { transcribeVoiceInput } from "./voiceGateway";
 import { getVoiceProvider } from "./voiceProvider";
 import type { PastoralRepository, TenantContext } from "./types";
@@ -78,12 +79,36 @@ async function uploadAndTranscribe(req: Request, res: Response) {
       getVoice: getVoiceProvider,
       repository,
     });
-    await repository.audit({ context, action: "voice.upload", agent: "voice-upload", model: transcript.provider, status: "success", metadata: { mimeType } });
+    const conversation = await getOrCreateConversation(context);
+    const agentResponse = await new AgentCore(repository).respond({
+      context,
+      conversationId: conversation.id,
+      message: transcript.text,
+      persistUserMessage: false,
+    });
+    await repository.audit({
+      context,
+      action: "voice.respond",
+      agent: "voice-upload",
+      model: agentResponse.model,
+      tool: agentResponse.tool,
+      status: "success",
+      metadata: { mimeType, transcriptionProvider: transcript.provider, responseProvider: agentResponse.provider },
+    });
     res.set("Cache-Control", "no-store");
-    return res.json(transcript);
+    return res.json({
+      conversationId: conversation.id,
+      response: {
+        content: agentResponse.content,
+        provider: agentResponse.provider,
+        model: agentResponse.model,
+        tool: agentResponse.tool,
+        confirmation: agentResponse.confirmation,
+      },
+    });
   } catch {
     console.warn("[Pastoral Voice] audio processing failed", { userId: requestContext.user.id });
-    return res.status(502).json({ error: "Não foi possível transcrever o áudio. Tente novamente ou envie a mensagem em texto." });
+    return res.status(502).json({ error: "Não foi possível processar a mensagem de voz. Tente novamente ou envie a mensagem em texto." });
   }
 }
 

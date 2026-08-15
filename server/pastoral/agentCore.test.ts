@@ -48,6 +48,22 @@ describe("Agent Core pastoral", () => {
     expect(repository.audits).toContainEqual(expect.objectContaining({ action: "agent.respond", status: "success" }));
   });
 
+  it("mantém a transcrição de voz interna e registra somente a resposta do agente", async () => {
+    const repository = new FakeRepository();
+    const agent = new AgentCore(repository);
+
+    await agent.respond({
+      context,
+      conversationId: 4,
+      message: "Quantas células realizaram reunião esta semana?",
+      persistUserMessage: false,
+    });
+
+    expect(repository.messages).toHaveLength(1);
+    expect(repository.messages[0]).toMatchObject({ role: "assistant" });
+    expect(repository.messages.some(message => message.content.includes("Quantas células"))).toBe(false);
+  });
+
   it("exige confirmação e mantém idempotência da Write Tool", async () => {
     const repository = new FakeRepository();
     const agent = new AgentCore(repository);

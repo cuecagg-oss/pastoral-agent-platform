@@ -7,6 +7,7 @@ import DashboardLayout from "@/components/DashboardLayout";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { invalidateActiveConversationMessages } from "@/lib/conversationCache";
 import { trpc } from "@/lib/trpc";
+import { canUseVoiceSynthesis, extractVoiceAgentReply, playVoiceResponse, type VoiceAgentReply } from "@/lib/voiceInteraction";
 import { Loader2, MessageCircleHeart, Sparkles, Volume2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -22,14 +23,16 @@ export default function PastoralChat() {
   const { user, isAuthenticated } = useAuth();
   const utils = trpc.useUtils();
   const [pendingFollowup, setPendingFollowup] = useState<PendingFollowup | null>(null);
+  const [voiceSynthesisAvailable] = useState(() => canUseVoiceSynthesis(typeof window === "undefined" ? undefined : window.speechSynthesis) && typeof SpeechSynthesisUtterance !== "undefined");
   const conversationQuery = trpc.pastoral.currentConversation.useQuery(undefined, { enabled: !!user && isAuthenticated });
   const conversationId = conversationQuery.data?.id;
   const messagesQuery = trpc.pastoral.messages.useQuery({ conversationId: conversationId ?? 0 }, { enabled: !!conversationId });
+  const applyAgentReply = (result: VoiceAgentReply) => {
+    if (result.confirmation) setPendingFollowup(result.confirmation);
+    invalidateActiveConversationMessages(conversationId, input => utils.pastoral.messages.invalidate(input));
+  };
   const sendMutation = trpc.pastoral.sendMessage.useMutation({
-    onSuccess: result => {
-      if (result.confirmation) setPendingFollowup(result.confirmation);
-      invalidateActiveConversationMessages(conversationId, input => utils.pastoral.messages.invalidate(input));
-    },
+    onSuccess: applyAgentReply,
     onError: error => toast.error(error.message),
   });
   const confirmMutation = trpc.pastoral.confirmFollowup.useMutation({
@@ -55,6 +58,15 @@ export default function PastoralChat() {
     sendMutation.mutate({ conversationId, content });
   };
 
+  const speak = async (content: string) => {
+    if (!voiceSynthesisAvailable || !canUseVoiceSynthesis(window.speechSynthesis)) return false;
+    return playVoiceResponse({
+      content,
+      synthesis: window.speechSynthesis,
+      createUtterance: text => new SpeechSynthesisUtterance(text),
+    });
+  };
+
   const transcribeAudio = async (audio: Blob, mimeType: string) => {
     if (!conversationId) return;
     setIsUploadingVoice(true);
@@ -63,10 +75,12 @@ export default function PastoralChat() {
       const formData = new FormData();
       formData.append("audio", audio, `mensagem-pastoral.${extension}`);
       const response = await fetch("/api/pastoral/voice", { method: "POST", credentials: "include", headers: { "x-pastoral-voice-request": "1" }, body: formData });
-      const payload = await response.json().catch(() => ({})) as { text?: string; error?: string };
-      if (!response.ok || !payload.text) throw new Error(payload.error || "Não foi possível enviar o áudio.");
-      toast.success("Áudio transcrito. Enviando ao assistente.");
-      sendMutation.mutate({ conversationId, content: payload.text });
+      const payload = await response.json().catch(() => ({})) as { error?: string };
+      const agentReply = extractVoiceAgentReply(payload);
+      if (!response.ok || !agentReply) throw new Error(payload.error || "Não foi possível enviar o áudio.");
+      applyAgentReply(agentReply);
+      const startedSpeech = await speak(agentReply.content);
+      toast.success(startedSpeech ? "O assistente respondeu por voz." : "Resposta recebida. A voz não foi iniciada neste navegador; consulte a resposta no histórico.");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Não foi possível enviar o áudio. Tente novamente.");
     } finally {
@@ -74,15 +88,9 @@ export default function PastoralChat() {
     }
   };
 
-  const speakLatest = () => {
-    if (!latestAnswer || !("speechSynthesis" in window)) {
-      toast.error("A leitura em voz alta não está disponível neste navegador.");
-      return;
-    }
-    window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(latestAnswer.replace(/[*#_`]/g, ""));
-    utterance.lang = "pt-BR";
-    window.speechSynthesis.speak(utterance);
+  const speakLatest = async () => {
+    if (!latestAnswer) return;
+    if (!await speak(latestAnswer)) toast.error("A leitura em voz alta não foi iniciada. Consulte a resposta no histórico.");
   };
 
   return (
@@ -131,8 +139,9 @@ export default function PastoralChat() {
             </div>
             <div className="rounded-2xl border border-[#e7e1d4] bg-card p-5 shadow-sm">
               <h2 className="font-semibold text-[#173b34]">Voz</h2>
-              <p className="mt-2 text-sm leading-6 text-muted-foreground">Use o microfone para transcrever um comando. A resposta textual continua sendo o registro canônico da conversa.</p>
-              <Button variant="outline" className="mt-4 w-full" onClick={speakLatest} disabled={!latestAnswer}>
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">Envie uma mensagem de voz. O áudio é interpretado internamente e o agente responde em voz; a resposta do assistente permanece registrada para consulta.</p>
+              {!voiceSynthesisAvailable ? <p className="mt-3 text-xs leading-5 text-muted-foreground">A síntese de voz não está disponível neste navegador. A resposta continuará disponível no histórico.</p> : null}
+              <Button variant="outline" className="mt-4 w-full" onClick={speakLatest} disabled={!latestAnswer || !voiceSynthesisAvailable}>
                 <Volume2 className="mr-2 size-4" /> Ouvir última resposta
               </Button>
             </div>
