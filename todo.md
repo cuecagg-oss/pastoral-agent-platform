@@ -184,3 +184,11 @@
 - [x] Ciclo THÁNOS Adoção — Ampliar o piloto multi-step com `consultar_relatorios` somente se a evidência, capability e isolamento forem comprovados.
 - [x] Ciclo THÁNOS Adoção — Cobrir elegibilidade, kill switch, fallback, telemetria, rollback, ausência de duplicação e isolamento em testes automatizados.
 - [x] Ciclo THÁNOS Adoção — Executar tipos, regressão, build, auditoria, demonstração, documentação, checkpoint e sincronização GitHub.
+- [x] Correção THÁNOS — Registrar o commit inicial auditado e reproduzir o risco de fallback após falha de telemetria sem alterar o histórico.
+- [x] Correção THÁNOS — Separar a telemetria de rota da execução/persistência para impedir chamada legado depois de resposta THÁNOS válida.
+- [x] Correção THÁNOS — Tornar a falha de telemetria pós-resposta observável e sanitizada sem expor erro interno nem produzir segunda resposta.
+- [x] Correção THÁNOS — Incluir duração não negativa por etapa no contrato de auditoria, preservando requestId, workspace e tenant.
+- [x] Correção THÁNOS — Cobrir a mutation pública com piloto desligado, elegível, três etapas, intenção/audiência não elegível, fallback e kill switch.
+- [x] Correção THÁNOS — Reforçar `consultar_relatorios` em sucesso, negação, falha da terceira etapa, fallback parcial e isolamento multi-tenant.
+- [x] Correção THÁNOS — Exercitar piloto e kill switch em ambiente controlado, restaurar a configuração segura e registrar apenas evidência sanitizada.
+- [x] Correção THÁNOS — Executar validação integral, documentar somente evidências reais, criar checkpoint e sincronizar o branch principal.

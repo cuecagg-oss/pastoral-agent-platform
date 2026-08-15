@@ -10,15 +10,28 @@ const pilotConfig = () => resolveThanosPilotRuntimeConfig({ enabled: "true", kil
 class PilotRepository implements PastoralRepository {
   messages: Array<{ role: string; content: string }> = [];
   audits: Array<{ action: string; requestId?: string; metadata?: Record<string, unknown> }> = [];
+  failPrimaryRouteAudit = false;
+  failUserAppend = false;
   queryCells() { return Promise.resolve({ tool: "consultar_celulas", summary: "", data: {} } as ToolResult); }
   queryReports() { return Promise.resolve({ tool: "consultar_relatorios", summary: "", data: {} } as ToolResult); }
   queryAttendance() { return Promise.resolve({ tool: "consultar_presenca", summary: "", data: {} } as ToolResult); }
   queryVisitors() { return Promise.resolve({ tool: "consultar_visitantes", summary: "", data: {} } as ToolResult); }
   queryLeaders() { return Promise.resolve({ tool: "consultar_lideres", summary: "", data: {} } as ToolResult); }
   findVisitor() { return Promise.resolve(null); }
-  appendMessage(input: { role: "user" | "assistant"; content: string }) { this.messages.push(input); return Promise.resolve(); }
+  appendMessage(input: { role: "user" | "assistant"; content: string }) {
+    if (this.failUserAppend && input.role === "user") return Promise.reject(new Error("persistência indisponível"));
+    this.messages.push(input);
+    return Promise.resolve();
+  }
   writeFollowup() { return Promise.resolve({ created: true, visitorName: "Ana" }); }
-  audit(input: { action: string; requestId?: string; metadata?: Record<string, unknown> }) { this.audits.push(input); return Promise.resolve(); }
+  audit(input: { action: string; requestId?: string; metadata?: Record<string, unknown> }) {
+    if (this.failPrimaryRouteAudit && input.action === "thanos.route") {
+      this.failPrimaryRouteAudit = false;
+      return Promise.reject(new Error("telemetria indisponível"));
+    }
+    this.audits.push(input);
+    return Promise.resolve();
+  }
 }
 
 describe("ThanosPilotRouter", () => {
@@ -90,5 +103,55 @@ describe("ThanosPilotRouter", () => {
     expect(result.thanos).toMatchObject({ version: "pilot-v1", fallback: true });
     expect(repository.audits).toContainEqual(expect.objectContaining({ action: "thanos.route", result: "thanos_deterministic_fallback", metadata: expect.objectContaining({ route: "thanos", fallback: true }) }));
     expect(JSON.stringify(repository.audits)).not.toContain("internal");
+  });
+
+  it("não chama o legado quando a telemetria falha após uma resposta THÁNOS já válida", async () => {
+    const repository = new PilotRepository();
+    repository.failPrimaryRouteAudit = true;
+    let legacyCalls = 0;
+    const router = new ThanosPilotRouter(repository, {
+      respond: async () => { legacyCalls += 1; return response; },
+    }, {
+      respondRead: async () => response,
+      respondMultiRead: async () => response,
+    }, pilotConfig, () => 40);
+
+    const result = await router.respond({ context, conversationId: 9, message: "Quais células temos?", requestId: "audit-after-response" });
+
+    expect(result).toMatchObject({ content: "Resposta segura", thanos: { fallback: false } });
+    expect(legacyCalls).toBe(0);
+    expect(repository.messages).toEqual([expect.objectContaining({ role: "user" })]);
+    expect(repository.audits).toContainEqual(expect.objectContaining({
+      action: "thanos.route.telemetry_failed",
+      requestId: "audit-after-response",
+      result: "post_response_telemetry_failed",
+      metadata: expect.objectContaining({ route: "thanos", durationMs: 0 }),
+    }));
+    expect(JSON.stringify(repository.audits)).not.toMatch(/telemetria indisponível|stack|secret|token/i);
+  });
+
+  it("só usa o legado com persistência própria quando a mensagem do usuário não foi gravada", async () => {
+    const repository = new PilotRepository();
+    repository.failUserAppend = true;
+    let receivedPersistFlag: boolean | undefined;
+    let thanosCalls = 0;
+    const router = new ThanosPilotRouter(repository, {
+      respond: async input => { receivedPersistFlag = input.persistUserMessage; return response; },
+    }, {
+      respondRead: async () => { thanosCalls += 1; return response; },
+      respondMultiRead: async () => { thanosCalls += 1; return response; },
+    }, pilotConfig, () => 50);
+
+    const result = await router.respond({ context, conversationId: 9, message: "Quais células temos?", requestId: "persist-before-thanos" });
+
+    expect(thanosCalls).toBe(0);
+    expect(receivedPersistFlag).toBeUndefined();
+    expect(repository.messages).toEqual([]);
+    expect(result.thanos).toMatchObject({ fallback: true, fallbackReason: "thanos_error" });
+    expect(repository.audits).toContainEqual(expect.objectContaining({
+      action: "thanos.route",
+      requestId: "persist-before-thanos",
+      metadata: expect.objectContaining({ route: "legacy_fallback", failureStage: "user_message_persistence" }),
+    }));
   });
 });

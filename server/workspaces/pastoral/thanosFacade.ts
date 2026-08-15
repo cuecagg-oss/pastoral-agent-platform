@@ -40,7 +40,13 @@ export class PastoralThanosFacade {
           result: event.result,
           confirmationStatus: "not_required",
           status: denied ? "denied" : event.status,
-          metadata: { workspaceKey: event.context.workspaceKey, domain: event.context.domain, step: event.step },
+          metadata: {
+            workspaceKey: event.context.workspaceKey,
+            tenantId: event.context.tenantId,
+            domain: event.context.domain,
+            step: event.step,
+            durationMs: event.durationMs === undefined ? undefined : Math.max(0, event.durationMs),
+          },
         });
       },
     };

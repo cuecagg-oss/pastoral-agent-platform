@@ -60,4 +60,42 @@ describe("PastoralThanosFacade", () => {
     expect(repository.appendMessage).toHaveBeenCalledTimes(1);
     expect(repository.audit).toHaveBeenCalledWith(expect.objectContaining({ action: "agent.tool.execute", requestId: "multi-3", tool: "consultar_relatorios" }));
   });
+
+  it("faz fallback composto quando relatórios falha na terceira etapa, sem trocar o tenant ou duplicar a resposta", async () => {
+    const repository = createRepository();
+    (repository.queryReports as ReturnType<typeof vi.fn>).mockRejectedValueOnce(new Error("falha interna de relatórios"));
+    const generator = vi.fn().mockResolvedValue({ content: "não deve gerar", provider: "deterministic", model: "pastoral-rules-v1" });
+    const facade = new PastoralThanosFacade(repository, { generate: generator }, async () => pastoralToolCatalog);
+    const tenantB: TenantContext = { ...context, organizationId: 2, organizationName: "Igreja Demonstração B", userId: 8, userName: "Pessoa B" };
+
+    const result = await facade.respondMultiRead({
+      context: tenantB,
+      conversationId: 7,
+      requestId: "multi-report-failure",
+      message: "Resumo de células, presença e relatórios",
+      tools: ["consultar_celulas", "consultar_presenca", "consultar_relatorios"],
+    });
+
+    expect(result).toMatchObject({
+      provider: "deterministic",
+      model: "thanos-multistep-fallback-v1",
+      tool: "consultar_celulas,consultar_presenca,consultar_relatorios",
+      requestId: "multi-report-failure",
+    });
+    expect(result.content).toContain("Há 2 células ativas.");
+    expect(result.content).toContain("A presença foi 18.");
+    expect(generator).not.toHaveBeenCalled();
+    expect(repository.queryCells).toHaveBeenCalledWith(tenantB);
+    expect(repository.queryAttendance).toHaveBeenCalledWith(tenantB);
+    expect(repository.queryReports).toHaveBeenCalledWith(tenantB);
+    expect(repository.appendMessage).toHaveBeenCalledTimes(1);
+    expect(repository.audit).toHaveBeenCalledWith(expect.objectContaining({
+      action: "agent.tool.execute",
+      requestId: "multi-report-failure",
+      result: "tool_execution_failed",
+      status: "failure",
+      tool: "consultar_relatorios",
+      metadata: expect.objectContaining({ workspaceKey: "pastoral", tenantId: "org:2", step: 3, durationMs: expect.any(Number) }),
+    }));
+  });
 });

@@ -16,16 +16,21 @@ import { pastoralToolNames } from "./pastoral/types";
 import { DatabasePastoralRepository, dashboardSummary, getOrCreateConversation, getTenantContextForUser, listMessages } from "./pastoral/repository";
 import { PastoralThanosFacade } from "./workspaces/pastoral/thanosFacade";
 
-const repository = new DatabasePastoralRepository();
-const agentCore = new AgentCore(repository);
-const agentGateway = new AgentGateway(repository, agentCore);
-const thanosPilotRouter = new ThanosPilotRouter(repository, agentGateway, new PastoralThanosFacade(repository));
+type AppRouterDependencies = Readonly<{
+  thanosPilotRouter?: Pick<ThanosPilotRouter, "respond">;
+}>;
 
 async function currentTenant(userId: number) {
   return getTenantContextForUser(userId);
 }
 
-export const appRouter = router({
+export function createAppRouter(dependencies: AppRouterDependencies = {}) {
+  const repository = new DatabasePastoralRepository();
+  const agentCore = new AgentCore(repository);
+  const agentGateway = new AgentGateway(repository, agentCore);
+  const thanosPilotRouter = dependencies.thanosPilotRouter ?? new ThanosPilotRouter(repository, agentGateway, new PastoralThanosFacade(repository));
+
+  return router({
     // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
   system: systemRouter,
   auth: router({
@@ -127,6 +132,9 @@ export const appRouter = router({
       return agentGateway.testHermesConnection(tenant);
     }),
   }),
-});
+  });
+}
+
+export const appRouter = createAppRouter();
 
 export type AppRouter = typeof appRouter;

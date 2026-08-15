@@ -2,8 +2,11 @@ import { eq } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
 import { auditLogs, conversationMessages, organizationAgentSettings, organizationMemberships, organizationToolSettings, users } from "../../drizzle/schema";
 import { getDb } from "../db";
-import { appRouter } from "../routers";
+import { appRouter, createAppRouter } from "../routers";
 import type { TrpcContext } from "../_core/context";
+import { DatabasePastoralRepository } from "./repository";
+import { ThanosPilotRouter } from "./thanosPilotRouter";
+import { resolveThanosPilotRuntimeConfig } from "./thanosPilotConfig";
 
 function authenticatedContext(): TrpcContext {
   return {
@@ -21,6 +24,37 @@ function authenticatedContext(): TrpcContext {
     req: { protocol: "https", headers: {} } as TrpcContext["req"],
     res: { clearCookie: () => undefined } as TrpcContext["res"],
   };
+}
+
+function createPublicPilotCaller(
+  config: Record<string, string>,
+  options: Readonly<{ failThanos?: boolean }> = {},
+) {
+  const repository = new DatabasePastoralRepository();
+  const legacy = {
+    respond: async (input: Readonly<{ context: Awaited<ReturnType<typeof getTenantContextForUser>>; conversationId: number; message: string; persistUserMessage?: boolean; requestId: string }>) => {
+      if (input.persistUserMessage !== false) {
+        await repository.appendMessage({ conversationId: input.conversationId, context: input.context, role: "user", content: input.message });
+      }
+      await repository.appendMessage({ conversationId: input.conversationId, context: input.context, role: "assistant", content: "Resposta legado", model: "legacy-test" });
+      return { content: "Resposta legado", provider: "legacy", model: "legacy-test", requestId: input.requestId, confirmationStatus: "not_required" as const };
+    },
+  };
+  const thanos = {
+    respondRead: async (input: Readonly<{ context: Awaited<ReturnType<typeof getTenantContextForUser>>; conversationId: number; requestId: string; tool: string }>) => {
+      if (options.failThanos) throw new Error("falha de execução THÁNOS");
+      await repository.appendMessage({ conversationId: input.conversationId, context: input.context, role: "assistant", content: "Resposta THÁNOS", model: "thanos-test", tool: input.tool });
+      return { content: "Resposta THÁNOS", provider: "deterministic", model: "thanos-test", tool: input.tool, requestId: input.requestId, confirmationStatus: "not_required" as const };
+    },
+    respondMultiRead: async (input: Readonly<{ context: Awaited<ReturnType<typeof getTenantContextForUser>>; conversationId: number; requestId: string; tools: readonly string[] }>) => {
+      if (options.failThanos) throw new Error("falha de execução THÁNOS");
+      const tool = input.tools.join(",");
+      await repository.appendMessage({ conversationId: input.conversationId, context: input.context, role: "assistant", content: "Resposta THÁNOS", model: "thanos-test", tool });
+      return { content: "Resposta THÁNOS", provider: "deterministic", model: "thanos-test", tool, requestId: input.requestId, confirmationStatus: "not_required" as const };
+    },
+  };
+  const pilotRouter = new ThanosPilotRouter(repository, legacy, thanos, () => resolveThanosPilotRuntimeConfig(config));
+  return createAppRouter({ thanosPilotRouter: pilotRouter }).createCaller(authenticatedContext());
 }
 
 describe("Consultas pastorais autenticadas", () => {
@@ -231,5 +265,37 @@ describe("Consultas pastorais autenticadas", () => {
     expect(coreLog).toMatchObject({ organizationId: 1, userId: 1, provider: "deterministic", result: "organization_scope_protected", confirmationStatus: "not_required", status: "success" });
     expect(gatewayLog).toMatchObject({ organizationId: 1, userId: 1, provider: "legacy", result: "gateway_response", confirmationStatus: "not_required", status: "success" });
     expect(logs.every(log => log.organizationId === 1 && log.requestId === response.requestId)).toBe(true);
+  });
+
+  it("exercita a mutation pública para piloto desligado, elegível, audiência/intenção não elegível, fallback e kill switch sem duplicar histórico", async () => {
+    const baseCaller = appRouter.createCaller(authenticatedContext());
+    const conversation = await baseCaller.pastoral.currentConversation();
+    const sendAndCount = async (caller: ReturnType<typeof createPublicPilotCaller>, content: string) => {
+      const before = await caller.pastoral.messages({ conversationId: conversation.id });
+      const response = await caller.pastoral.sendMessage({ conversationId: conversation.id, content });
+      const after = await caller.pastoral.messages({ conversationId: conversation.id });
+      expect(after).toHaveLength(before.length + 2);
+      expect(after.slice(-2).map(message => message.role)).toEqual(["user", "assistant"]);
+      return response;
+    };
+
+    const disabled = createPublicPilotCaller({ enabled: "false", killSwitch: "false", organizationIds: "1", userIds: "1", version: "mutation-test" });
+    await expect(sendAndCount(disabled, "Quais células temos?")).resolves.not.toHaveProperty("thanos");
+
+    const eligible = createPublicPilotCaller({ enabled: "true", killSwitch: "false", organizationIds: "1", userIds: "1", version: "mutation-test" });
+    await expect(sendAndCount(eligible, "Mostre um resumo de células, presença e relatórios")).resolves.toMatchObject({
+      thanos: { mode: "multi_read", tools: ["consultar_celulas", "consultar_presenca", "consultar_relatorios"], fallback: false },
+    });
+
+    const outsideAudience = createPublicPilotCaller({ enabled: "true", killSwitch: "false", organizationIds: "2", userIds: "1", version: "mutation-test" });
+    await expect(sendAndCount(outsideAudience, "Quais células temos?")).resolves.not.toHaveProperty("thanos");
+
+    await expect(sendAndCount(eligible, "Registre acompanhamento de visitante")).resolves.not.toHaveProperty("thanos");
+
+    const fallback = createPublicPilotCaller({ enabled: "true", killSwitch: "false", organizationIds: "1", userIds: "1", version: "mutation-test" }, { failThanos: true });
+    await expect(sendAndCount(fallback, "Quais células temos?")).resolves.toMatchObject({ thanos: { fallback: true, fallbackReason: "thanos_error" } });
+
+    const killed = createPublicPilotCaller({ enabled: "true", killSwitch: "true", organizationIds: "1", userIds: "1", version: "mutation-test" });
+    await expect(sendAndCount(killed, "Quais células temos?")).resolves.not.toHaveProperty("thanos");
   });
 });

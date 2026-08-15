@@ -71,6 +71,32 @@ describe("ThanosMultiStepReadOrchestrator", () => {
     expect(record).toHaveBeenCalledWith(expect.objectContaining({ action: "thanos.read.failed", result: "multistep_partial_fallback" }));
   });
 
+  it("registra duração não negativa e requestId comum em cada etapa de um plano de três leituras", async () => {
+    const record = vi.fn().mockResolvedValue(undefined);
+    const timestamps = [10, 5, 20, 45, 60, 90];
+    const orchestrator = new ThanosMultiStepReadOrchestrator({ record }, () => timestamps.shift() ?? 90);
+
+    await orchestrator.run({
+      context: createContext(7),
+      steps: [
+        { name: "consultar_celulas", requiredCapability: "agent:read", execute: async () => ({ summary: "Células.", data: {} }) },
+        { name: "consultar_presenca", requiredCapability: "agent:read", execute: async () => ({ summary: "Presença.", data: {} }) },
+        { name: "consultar_relatorios", requiredCapability: "agent:read", execute: async () => ({ summary: "Relatórios.", data: {} }) },
+      ],
+      system: "Sistema",
+      user: "Mensagem",
+      generator: { generate: async () => ({ content: "Resumo", provider: "deterministic", model: "rules-v1" }) },
+    });
+
+    const stepEvents = record.mock.calls.map(([event]) => event).filter(event => event.action === "thanos.read.step");
+    expect(stepEvents).toEqual([
+      expect.objectContaining({ tool: "consultar_celulas", step: 1, durationMs: 0, context: expect.objectContaining({ requestId: "multi-7" }) }),
+      expect.objectContaining({ tool: "consultar_presenca", step: 2, durationMs: 25, context: expect.objectContaining({ requestId: "multi-7" }) }),
+      expect.objectContaining({ tool: "consultar_relatorios", step: 3, durationMs: 30, context: expect.objectContaining({ requestId: "multi-7" }) }),
+    ]);
+    expect(stepEvents.every(event => event.durationMs >= 0)).toBe(true);
+  });
+
   it("rejeita planos fora do limite explícito do piloto", async () => {
     const orchestrator = new ThanosMultiStepReadOrchestrator({ record: vi.fn().mockResolvedValue(undefined) });
     await expect(orchestrator.run({

@@ -30,6 +30,7 @@ export type ThanosAuditPort = Readonly<{
     result: string;
     tool: string;
     step?: number;
+    durationMs?: number;
     provider?: string;
     model?: string;
   }>): Promise<void>;
@@ -143,7 +144,7 @@ function deterministicFallback(evidence: ThanosEvidence): string {
 
 /** Orquestra um piloto explícito de 2–3 leituras autorizadas, sem habilitar operações de escrita. */
 export class ThanosMultiStepReadOrchestrator {
-  constructor(private readonly audit: ThanosAuditPort) {}
+  constructor(private readonly audit: ThanosAuditPort, private readonly now: () => number = Date.now) {}
 
   async run(input: Readonly<{
     context: ThanosContext;
@@ -174,6 +175,7 @@ export class ThanosMultiStepReadOrchestrator {
         throw error;
       }
 
+      const stepStartedAt = this.now();
       try {
         const evidence = await tool.execute(input.context);
         completed.push(Object.freeze({ tool, evidence }));
@@ -184,6 +186,7 @@ export class ThanosMultiStepReadOrchestrator {
           result: "step_completed",
           tool: tool.name,
           step,
+          durationMs: Math.max(0, this.now() - stepStartedAt),
         });
       } catch (_error) {
         const evidence = composeEvidence(completed);
@@ -194,6 +197,7 @@ export class ThanosMultiStepReadOrchestrator {
           result: "tool_execution_failed",
           tool: tool.name,
           step,
+          durationMs: Math.max(0, this.now() - stepStartedAt),
         });
         await this.audit.record({
           context: input.context,

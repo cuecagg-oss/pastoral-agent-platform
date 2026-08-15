@@ -37,30 +37,79 @@ export class ThanosPilotRouter {
       return this.respondLegacy({ ...input, requestId }, decision, startedAt);
     }
 
-    await this.repository.appendMessage({ conversationId: input.conversationId, context: input.context, role: "user", content: input.message });
+    try {
+      await this.repository.appendMessage({ conversationId: input.conversationId, context: input.context, role: "user", content: input.message });
+    } catch (_error) {
+      return this.respondLegacyFallback({ ...input, requestId }, decision, startedAt, "user_message_persistence");
+    }
+
+    let marked: AgentResponse;
     try {
       const response = decision.mode === "multi_read"
         ? await this.thanos.respondMultiRead({ ...input, requestId, tools: decision.tools ?? [] })
         : await this.thanos.respondRead({ ...input, requestId, tool: decision.tools![0] });
       const softFallback = response.model === "thanos-multistep-fallback-v1";
-      const marked = { ...response, thanos: { version: decision.version, mode: decision.mode!, tools: decision.tools ?? [], fallback: softFallback } } as AgentResponse;
-      await this.auditRoute(input.context, requestId, decision, "thanos", marked, startedAt, softFallback);
-      return marked;
+      marked = { ...response, thanos: { version: decision.version, mode: decision.mode!, tools: decision.tools ?? [], fallback: softFallback } } as AgentResponse;
     } catch (_error) {
-      const response = await this.legacy.respond({ ...input, requestId, persistUserMessage: false });
-      const marked = {
-        ...response,
-        thanos: { version: decision.version, mode: decision.mode!, tools: decision.tools ?? [], fallback: true, fallbackReason: "thanos_error" as const },
-      } as AgentResponse;
-      await this.auditRoute(input.context, requestId, decision, "legacy_fallback", marked, startedAt, true);
-      return marked;
+      return this.respondLegacyFallback({ ...input, requestId }, decision, startedAt, "thanos_execution");
     }
+
+    await this.auditRouteSafely(input.context, requestId, decision, "thanos", marked, startedAt, marked.thanos?.fallback ?? false);
+    return marked;
   }
 
   private async respondLegacy(input: Required<RouterInput>, decision: ThanosPilotDecision, startedAt: number) {
     const response = await this.legacy.respond(input);
-    await this.auditRoute(input.context, input.requestId, decision, "legacy", response, startedAt, false);
+    await this.auditRouteSafely(input.context, input.requestId, decision, "legacy", response, startedAt, false);
     return response;
+  }
+
+  private async respondLegacyFallback(input: Required<RouterInput>, decision: ThanosPilotDecision, startedAt: number, failureStage: "user_message_persistence" | "thanos_execution") {
+    const response = await this.legacy.respond({ ...input, persistUserMessage: failureStage === "thanos_execution" ? false : undefined });
+    const marked = {
+      ...response,
+      thanos: { version: decision.version, mode: decision.mode!, tools: decision.tools ?? [], fallback: true, fallbackReason: "thanos_error" as const },
+    } as AgentResponse;
+    await this.auditRouteSafely(input.context, input.requestId, decision, "legacy_fallback", marked, startedAt, true, failureStage);
+    return marked;
+  }
+
+  private async auditRouteSafely(
+    context: TenantContext,
+    requestId: string,
+    decision: ThanosPilotDecision,
+    route: "thanos" | "legacy" | "legacy_fallback",
+    response: AgentResponse,
+    startedAt: number,
+    fallback: boolean,
+    failureStage?: "user_message_persistence" | "thanos_execution",
+  ) {
+    try {
+      await this.auditRoute(context, requestId, decision, route, response, startedAt, fallback, failureStage);
+    } catch (_error) {
+      try {
+        await this.repository.audit({
+          context,
+          action: "thanos.route.telemetry_failed",
+          agent: ROUTER_AGENT,
+          provider: "telemetry",
+          model: "thanos-router-v1",
+          requestId,
+          result: "post_response_telemetry_failed",
+          confirmationStatus: "not_required",
+          status: "failure",
+          metadata: {
+            route,
+            decision: decision.reason,
+            version: decision.version,
+            fallback,
+            durationMs: Math.max(0, this.now() - startedAt),
+          },
+        });
+      } catch (_telemetryError) {
+        console.error(`[THANOS] telemetry failure requestId=${requestId}`);
+      }
+    }
   }
 
   private async auditRoute(
@@ -71,6 +120,7 @@ export class ThanosPilotRouter {
     response: AgentResponse,
     startedAt: number,
     fallback: boolean,
+    failureStage?: "user_message_persistence" | "thanos_execution",
   ) {
     await this.repository.audit({
       context,
@@ -91,6 +141,7 @@ export class ThanosPilotRouter {
         toolCount: decision.tools?.length ?? 0,
         tools: decision.tools?.join(",") ?? null,
         fallback,
+        failureStage: failureStage ?? null,
         durationMs: Math.max(0, this.now() - startedAt),
       },
     });
