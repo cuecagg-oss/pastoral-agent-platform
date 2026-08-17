@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { HermesClient } from "./hermesClient";
+import { HermesClient, HermesUnavailableError } from "./hermesClient";
 
 const config = {
   enabled: true,
@@ -17,8 +17,8 @@ describe("cliente Hermes resiliente", () => {
       return new Response(null, { status: 204 });
     }, () => 100, "https://hermes.example/", "secret-not-returned");
 
-    const result = await client.probe(config);
-    const status = client.getStatus(config);
+    const result = await client.probe(config, undefined, "organization:1");
+    const status = client.getStatus(config, "organization:1");
 
     expect(result).toEqual({ connected: true, attempts: 2, latencyMs: 0, failure: null });
     expect(status).toMatchObject({ connection: "connected", retries: 1, lastFailure: null });
@@ -34,13 +34,92 @@ describe("cliente Hermes resiliente", () => {
     }, () => clock, "https://hermes.example/", "secret-not-returned");
     const noRetryConfig = { ...config, hermes: { ...config.hermes, retries: 0 } };
 
-    await client.probe(noRetryConfig);
-    await client.probe(noRetryConfig);
-    const blocked = await client.probe(noRetryConfig);
+    await client.probe(noRetryConfig, undefined, "organization:1");
+    await client.probe(noRetryConfig, undefined, "organization:1");
+    const blocked = await client.probe(noRetryConfig, undefined, "organization:1");
 
     expect(blocked).toMatchObject({ connected: false, attempts: 0, failure: "circuit_open" });
     expect(calls).toBe(2);
     clock += 101;
-    expect(client.getStatus(noRetryConfig).connection).toBe("degraded");
+    expect(client.getStatus(noRetryConfig, "organization:1").connection).toBe("degraded");
+  });
+
+  it.each([
+    ["network_error", async () => { throw new Error("private network detail"); }],
+    ["response_error", async () => new Response(JSON.stringify({ error: "private upstream detail" }), { status: 503 })],
+    ["response_error", async () => new Response(JSON.stringify({ content: "" }), { status: 200 })],
+    ["response_error", async () => new Response("{invalid-json", { status: 200 })],
+  ] as const)("classifica %s na geração sem expor o erro bruto", async (failure, fetcher) => {
+    const attempts: unknown[] = [];
+    const client = new HermesClient(fetcher, () => 100, "https://hermes.example/", "secret-not-returned");
+    const noRetryConfig = { ...config, hermes: { ...config.hermes, retries: 0 } };
+
+    let captured: unknown;
+    try {
+      await client.generate(noRetryConfig, { requestId: "failure-request", system: "Sistema", user: "Resumo autorizado", fallback: "Fallback", isolationKey: "organization:1" }, attempt => {
+        attempts.push(attempt);
+      });
+    } catch (error) {
+      captured = error;
+    }
+
+    expect(captured).toBeInstanceOf(HermesUnavailableError);
+    expect(captured).toMatchObject({ failure });
+    expect(attempts).toEqual([expect.objectContaining({ attempt: 1, success: false, failure })]);
+    expect(JSON.stringify({ captured: String(captured), attempts, status: client.getStatus(noRetryConfig, "organization:1") })).not.toMatch(/private|secret-not-returned|hermes\.example/i);
+  });
+
+  it("classifica timeout e encerra a tentativa pelo AbortSignal", async () => {
+    const client = new HermesClient((_url, init) => new Promise((_resolve, reject) => {
+      init?.signal?.addEventListener("abort", () => reject(new DOMException("private timeout detail", "AbortError")), { once: true });
+    }), Date.now, "https://hermes.example/", "secret-not-returned");
+    const timeoutConfig = { ...config, hermes: { ...config.hermes, timeoutMs: 5, retries: 0 } };
+
+    await expect(client.generate(timeoutConfig, {
+      requestId: "timeout-request",
+      system: "Sistema",
+      user: "Resumo autorizado",
+      fallback: "Fallback",
+      isolationKey: "organization:1",
+    })).rejects.toMatchObject({ failure: "timeout" });
+    expect(client.getStatus(timeoutConfig, "organization:1")).toMatchObject({ connection: "degraded", lastFailure: "timeout" });
+  });
+
+  it("mantém o timeout ativo enquanto consome o corpo da resposta", async () => {
+    const client = new HermesClient((_url, init) => Promise.resolve(new Response(new ReadableStream({
+      start(controller) {
+        init?.signal?.addEventListener("abort", () => controller.error(new DOMException("private body timeout", "AbortError")), { once: true });
+      },
+    }))), Date.now, "https://hermes.example/", "secret-not-returned");
+    const timeoutConfig = { ...config, hermes: { ...config.hermes, timeoutMs: 5, retries: 0 } };
+    const generation = client.generate(timeoutConfig, {
+      requestId: "body-timeout-request",
+      system: "Sistema",
+      user: "Resumo autorizado",
+      fallback: "Fallback",
+      isolationKey: "organization:1",
+    }).then(() => "unexpected_success", error => error instanceof HermesUnavailableError ? error.failure : "unexpected_error");
+
+    const outcome = await Promise.race([
+      generation,
+      new Promise<string>(resolve => setTimeout(() => resolve("body_timeout_not_enforced"), 50)),
+    ]);
+
+    expect(outcome).toBe("timeout");
+  });
+
+  it("abre o circuito também na geração e bloqueia a chamada seguinte", async () => {
+    let calls = 0;
+    const client = new HermesClient(async () => {
+      calls += 1;
+      throw new Error("private network detail");
+    }, () => 100, "https://hermes.example/", "secret-not-returned");
+    const noRetryConfig = { ...config, hermes: { ...config.hermes, retries: 0 } };
+    const input = { requestId: "circuit-request", system: "Sistema", user: "Resumo autorizado", fallback: "Fallback", isolationKey: "organization:1" };
+
+    await expect(client.generate(noRetryConfig, input)).rejects.toMatchObject({ failure: "network_error" });
+    await expect(client.generate(noRetryConfig, input)).rejects.toMatchObject({ failure: "network_error" });
+    await expect(client.generate(noRetryConfig, input)).rejects.toMatchObject({ failure: "circuit_open" });
+    expect(calls).toBe(2);
   });
 });

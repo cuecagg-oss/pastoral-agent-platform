@@ -1,0 +1,130 @@
+name: THÁNOS Hermes Sandbox CI
+
+on:
+  push:
+    branches:
+      - ci/thanos-hermes-sandbox
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  sandbox:
+    name: Isolated MySQL 8.4 sandbox
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      NODE_ENV: test
+      DB_HOST: 127.0.0.1
+      DB_PORT: "3306"
+      DB_NAME: thanos_hermes_ci
+      DB_USER: thanos_ci
+      DB_PASSWORD: thanos_ci_ephemeral
+      DATABASE_URL: mysql://thanos_ci:thanos_ci_ephemeral@127.0.0.1:3306/thanos_hermes_ci
+      HERMES_ENABLED: "false"
+      THANOS_PILOT_ENABLED: "false"
+      THANOS_PILOT_KILL_SWITCH: "false"
+      THANOS_PILOT_ORGANIZATION_IDS: ""
+      THANOS_PILOT_USER_IDS: ""
+      THANOS_PILOT_VERSION: thanos-hermes-sandbox-v1
+
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_DATABASE: thanos_hermes_ci
+          MYSQL_USER: thanos_ci
+          MYSQL_PASSWORD: thanos_ci_ephemeral
+          MYSQL_ROOT_PASSWORD: root_ci_ephemeral
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -u root -proot_ci_ephemeral"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Verify sandbox boundary
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          case "$DB_HOST" in
+            127.0.0.1|localhost) ;;
+            *) echo "Refusing non-local database host" >&2; exit 1 ;;
+          esac
+          EXPECTED_DATABASE_URL="mysql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}"
+          if [[ "$DATABASE_URL" != "$EXPECTED_DATABASE_URL" ]]; then
+            echo "Refusing unexpected DATABASE_URL boundary" >&2
+            exit 1
+          fi
+          if [[ "$DB_NAME" != *ci* && "$DB_NAME" != *test* && "$DB_NAME" != *sandbox* ]]; then
+            echo "Refusing non-test database name" >&2
+            exit 1
+          fi
+          if [[ "$HERMES_ENABLED" != "false" || -n "${HERMES_BASE_URL:-}" || -n "${HERMES_API_KEY:-}" ]]; then
+            echo "Refusing enabled or configured Hermes in sandbox CI" >&2
+            exit 1
+          fi
+          if [[ "$THANOS_PILOT_ENABLED" != "false" ]]; then
+            echo "Refusing enabled THÁNOS pilot in sandbox CI" >&2
+            exit 1
+          fi
+          if [[ "$DB_HOST" != "127.0.0.1" && "$DB_HOST" != "localhost" ]]; then
+            echo "Refusing non-local service endpoint" >&2
+            exit 1
+          fi
+          echo "Sandbox boundary verified: local host, test database, Hermes disabled, pilot disabled."
+
+      - name: Verify MySQL 8.4 service
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          if ! command -v mysql >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y default-mysql-client
+          fi
+          mysql --protocol=TCP -h 127.0.0.1 -P 3306 -u"$DB_USER" -p"$DB_PASSWORD" "$DB_NAME" \
+            -Nse 'SELECT VERSION(), DATABASE();' \
+            | awk 'BEGIN { ok=0 } /8\.4/ && /thanos_hermes_ci/ { ok=1 } END { exit ok ? 0 : 1 }'
+
+      - name: Run migrations in temporary database
+        run: pnpm db:push
+
+      - name: Run synthetic-safe regression tests
+        run: pnpm test
+
+      - name: Typecheck
+        run: pnpm check
+
+      - name: Build
+        run: pnpm build
+
+      - name: Confirm no Hermes configuration was introduced
+        if: always()
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          [[ "$HERMES_ENABLED" == "false" ]]
+          [[ -z "${HERMES_BASE_URL:-}" ]]
+          [[ -z "${HERMES_API_KEY:-}" ]]
+          [[ "$THANOS_PILOT_ENABLED" == "false" ]]
+          echo "Hermes configuration remains absent and disabled."

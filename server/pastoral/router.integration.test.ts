@@ -97,13 +97,15 @@ describe("Consultas pastorais autenticadas", () => {
       model: "voice-input-v1",
     });
     const messagesA = await callerA.pastoral.messages({ conversationId: conversationA.id });
-    const demoPastorA = (await db.select().from(users).where(eq(users.openId, "demo-pastor-a")).limit(1))[0];
+    const sameChurchUser = (await db.select().from(users).where(eq(users.openId, "router-test-same-org-user")).limit(1))[0] ?? (await db.insert(users).values({ openId: "router-test-same-org-user", name: "Usuário sintético da mesma organização", email: "router-test-same-org-user@example.test", loginMethod: "test", role: "user" }).then(async () => (await db.select().from(users).where(eq(users.openId, "router-test-same-org-user")).limit(1))[0]));
     const demoPastorB = (await db.select().from(users).where(eq(users.openId, "demo-pastor-b")).limit(1))[0];
-    if (!demoPastorA) throw new Error("Segundo usuário do tenant A não foi semeado.");
+    if (!sameChurchUser) throw new Error("Usuário da mesma organização não pôde ser criado ou recuperado.");
     if (!demoPastorB) throw new Error("Usuário do tenant B não foi semeado.");
+    await db.insert(organizationMemberships).values({ organizationId: conversationA.organizationId, userId: sameChurchUser.id, role: "pastor" }).onDuplicateKeyUpdate({ set: { role: "pastor" } });
+    expect(sameChurchUser.id).not.toBe(conversationA.userId);
     const callerSameChurch = appRouter.createCaller({
       ...authenticatedContext(),
-      user: { ...authenticatedContext().user!, id: demoPastorA.id, openId: demoPastorA.openId, name: demoPastorA.name, role: "user" },
+      user: { ...authenticatedContext().user!, id: sameChurchUser.id, openId: sameChurchUser.openId, name: sameChurchUser.name, role: "user" },
     });
     const callerB = appRouter.createCaller({
       ...authenticatedContext(),

@@ -134,7 +134,7 @@ export async function runSyntheticChatMonitor(taskUid: string, now = new Date())
   const syntheticRepository = new NonPersistingSyntheticRepository(repository);
   const agentCore = new AgentCore(syntheticRepository);
   const gateway = new AgentGateway(syntheticRepository, agentCore);
-  const router = new ThanosPilotRouter(syntheticRepository, gateway, new PastoralThanosFacade(syntheticRepository));
+  const router = new ThanosPilotRouter(syntheticRepository, gateway, new PastoralThanosFacade(syntheticRepository, gateway));
   const summary: SyntheticMonitorSummary = { monitorId: monitor.id, scheduledFor, checked: 0, healthy: 0, unhealthy: 0, skipped: 0 };
 
   for (const context of contexts) {

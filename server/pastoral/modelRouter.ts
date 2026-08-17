@@ -10,6 +10,12 @@ export type ModelGenerationResult = {
   content: string;
   provider: ModelProvider;
   model: string;
+  gateway?: {
+    version: "v1";
+    provider: "legacy" | "hermes";
+    fallback: boolean;
+    fallbackReason?: "gateway_disabled" | "hermes_unavailable" | "hermes_circuit_open";
+  };
 };
 
 type ProviderConfiguration = {
