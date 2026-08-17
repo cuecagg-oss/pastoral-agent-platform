@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { pastoralToolCatalog } from "../../pastoral/toolCatalog";
+import { ModelRouter } from "../../pastoral/modelRouter";
 import { PastoralThanosFacade } from "./thanosFacade";
 import type { PastoralRepository, TenantContext } from "../../pastoral/types";
 
@@ -131,7 +132,7 @@ describe("PastoralThanosFacade", () => {
   it("recusa consultar_relatorios desabilitado antes da consulta e não persiste resposta", async () => {
     const repository = createRepository();
     const disabledCatalog = pastoralToolCatalog.map(entry => entry.name === "consultar_relatorios" ? { ...entry, enabled: false } : entry);
-    const facade = new PastoralThanosFacade(repository, undefined, async () => disabledCatalog);
+    const facade = new PastoralThanosFacade(repository, new ModelRouter(), async () => disabledCatalog);
 
     await expect(facade.respondRead({ context, conversationId: 10, message: "Relatórios pendentes", requestId: "report-disabled", tool: "consultar_relatorios" })).rejects.toThrow("desabilitada");
 
@@ -143,7 +144,7 @@ describe("PastoralThanosFacade", () => {
   it("recusa consultar_relatorios para papel não autorizado antes da consulta e persistência", async () => {
     const repository = createRepository();
     const unprivilegedContext: TenantContext = { ...context, role: "user" };
-    const facade = new PastoralThanosFacade(repository, undefined, async () => pastoralToolCatalog);
+    const facade = new PastoralThanosFacade(repository, new ModelRouter(), async () => pastoralToolCatalog);
 
     await expect(facade.respondRead({ context: unprivilegedContext, conversationId: 11, message: "Relatórios pendentes", requestId: "report-role-denied", tool: "consultar_relatorios" })).rejects.toThrow("função não possui permissão");
 

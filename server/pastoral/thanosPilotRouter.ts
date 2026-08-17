@@ -48,7 +48,7 @@ export class ThanosPilotRouter {
       const response = decision.mode === "multi_read"
         ? await this.thanos.respondMultiRead({ ...input, requestId, tools: decision.tools ?? [] })
         : await this.thanos.respondRead({ ...input, requestId, tool: decision.tools![0] });
-      const softFallback = response.model === "thanos-multistep-fallback-v1";
+      const softFallback = response.gateway?.fallback === true || response.model === "thanos-multistep-fallback-v1";
       marked = { ...response, thanos: { version: decision.version, mode: decision.mode!, tools: decision.tools ?? [], fallback: softFallback } } as AgentResponse;
     } catch (_error) {
       return this.respondLegacyFallback({ ...input, requestId }, decision, startedAt, "thanos_execution");

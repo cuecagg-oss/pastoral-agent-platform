@@ -38,6 +38,17 @@ export class HermesUnavailableError extends Error {
 
 type FetchLike = (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
 type AttemptListener = (attempt: HermesAttempt) => void | Promise<void>;
+type HermesCircuitState = {
+  failures: number;
+  openUntil: number;
+  latencyMs: number | null;
+  lastFailure: HermesFailureCode | null;
+  lastConnection: HermesConnectionStatus;
+};
+
+function createCircuitState(): HermesCircuitState {
+  return { failures: 0, openUntil: 0, latencyMs: null, lastFailure: null, lastConnection: "unknown" };
+}
 
 function responseContent(payload: unknown): { content: string; model: string } | null {
   if (!payload || typeof payload !== "object") return null;
@@ -47,11 +58,7 @@ function responseContent(payload: unknown): { content: string; model: string } |
 }
 
 export class HermesClient {
-  private failures = 0;
-  private openUntil = 0;
-  private latencyMs: number | null = null;
-  private lastFailure: HermesFailureCode | null = null;
-  private lastConnection: HermesConnectionStatus = "unknown";
+  private readonly circuitStates = new Map<string, HermesCircuitState>();
 
   constructor(
     private readonly fetcher: FetchLike = fetch,
@@ -60,16 +67,18 @@ export class HermesClient {
     private readonly apiKey = ENV.hermesApiKey,
   ) {}
 
-  getStatus(config: AgentGatewayRuntimeConfig): HermesSanitizedStatus {
+  getStatus(config: AgentGatewayRuntimeConfig, isolationKey: string): HermesSanitizedStatus {
     const base = config.hermes;
+    const state = this.circuitState(isolationKey);
     if (!base.enabled) return { enabled: false, configured: base.configured, connection: "disabled", model: base.model, timeoutMs: base.timeoutMs, retries: base.retries, latencyMs: null, lastFailure: null };
     if (!base.configured) return { enabled: true, configured: false, connection: "unconfigured", model: base.model, timeoutMs: base.timeoutMs, retries: base.retries, latencyMs: null, lastFailure: "unconfigured" };
-    if (this.now() < this.openUntil) return { enabled: true, configured: true, connection: "circuit_open", model: base.model, timeoutMs: base.timeoutMs, retries: base.retries, latencyMs: this.latencyMs, lastFailure: "circuit_open" };
-    return { enabled: true, configured: true, connection: this.lastConnection, model: base.model, timeoutMs: base.timeoutMs, retries: base.retries, latencyMs: this.latencyMs, lastFailure: this.lastFailure };
+    if (this.now() < state.openUntil) return { enabled: true, configured: true, connection: "circuit_open", model: base.model, timeoutMs: base.timeoutMs, retries: base.retries, latencyMs: state.latencyMs, lastFailure: "circuit_open" };
+    return { enabled: true, configured: true, connection: state.lastConnection, model: base.model, timeoutMs: base.timeoutMs, retries: base.retries, latencyMs: state.latencyMs, lastFailure: state.lastFailure };
   }
 
-  async probe(config: AgentGatewayRuntimeConfig, onAttempt?: AttemptListener): Promise<HermesProbeResult> {
-    const status = this.getStatus(config);
+  async probe(config: AgentGatewayRuntimeConfig, onAttempt: AttemptListener | undefined, isolationKey: string): Promise<HermesProbeResult> {
+    const state = this.circuitState(isolationKey);
+    const status = this.getStatus(config, isolationKey);
     if (status.connection === "disabled") return { connected: false, attempts: 0, latencyMs: null, failure: "disabled" };
     if (status.connection === "unconfigured") return { connected: false, attempts: 0, latencyMs: null, failure: "unconfigured" };
     if (status.connection === "circuit_open") return { connected: false, attempts: 0, latencyMs: status.latencyMs, failure: "circuit_open" };
@@ -83,39 +92,41 @@ export class HermesClient {
       try {
         const endpoint = new URL("health", this.baseUrl).toString();
         const response = await this.fetcher(endpoint, { method: "GET", headers: { Authorization: `Bearer ${this.apiKey}` }, signal: abort.signal });
-        clearTimeout(timer);
         if (!response.ok) {
           lastFailure = "response_error";
-          await onAttempt?.({ attempt, success: false, latencyMs: null, failure: lastFailure });
+          await this.notifyAttempt(onAttempt, { attempt, success: false, latencyMs: null, failure: lastFailure });
           continue;
         }
-        this.latencyMs = Math.max(0, this.now() - startedAt);
-        this.failures = 0;
-        this.openUntil = 0;
-        this.lastFailure = null;
-        this.lastConnection = "connected";
-        await onAttempt?.({ attempt, success: true, latencyMs: this.latencyMs, failure: null });
-        return { connected: true, attempts: attempt, latencyMs: this.latencyMs, failure: null };
+        state.latencyMs = Math.max(0, this.now() - startedAt);
+        state.failures = 0;
+        state.openUntil = 0;
+        state.lastFailure = null;
+        state.lastConnection = "connected";
+        await this.notifyAttempt(onAttempt, { attempt, success: true, latencyMs: state.latencyMs, failure: null });
+        return { connected: true, attempts: attempt, latencyMs: state.latencyMs, failure: null };
       } catch (error) {
-        clearTimeout(timer);
         lastFailure = error instanceof DOMException && error.name === "AbortError" ? "timeout" : "network_error";
-        await onAttempt?.({ attempt, success: false, latencyMs: null, failure: lastFailure });
+        await this.notifyAttempt(onAttempt, { attempt, success: false, latencyMs: null, failure: lastFailure });
+      } finally {
+        clearTimeout(timer);
       }
     }
 
-    this.failures += 1;
-    this.lastFailure = lastFailure;
-    this.lastConnection = "degraded";
-    if (this.failures >= config.hermes.circuitFailureThreshold) this.openUntil = this.now() + config.hermes.circuitCooldownMs;
-    return { connected: false, attempts, latencyMs: this.latencyMs, failure: lastFailure };
+    state.failures += 1;
+    state.lastFailure = lastFailure;
+    state.lastConnection = "degraded";
+    if (state.failures >= config.hermes.circuitFailureThreshold) state.openUntil = this.now() + config.hermes.circuitCooldownMs;
+    return { connected: false, attempts, latencyMs: state.latencyMs, failure: lastFailure };
   }
 
   async generate(
     config: AgentGatewayRuntimeConfig,
-    input: { requestId: string; system: string; user: string; fallback: string },
+    input: { requestId: string; system: string; user: string; fallback: string; isolationKey: string },
     onAttempt?: AttemptListener,
   ): Promise<{ content: string; provider: "hermes"; model: string }> {
-    const status = this.getStatus(config);
+    const isolationKey = input.isolationKey;
+    const state = this.circuitState(isolationKey);
+    const status = this.getStatus(config, isolationKey);
     if (status.connection === "disabled") throw new HermesUnavailableError("disabled");
     if (status.connection === "unconfigured") throw new HermesUnavailableError("unconfigured");
     if (status.connection === "circuit_open") throw new HermesUnavailableError("circuit_open");
@@ -132,38 +143,63 @@ export class HermesClient {
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${this.apiKey}` },
           signal: abort.signal,
-          body: JSON.stringify({ version: "v1", requestId: input.requestId, system: input.system, user: input.user, fallback: input.fallback }),
+          body: JSON.stringify({ version: "v1", requestId: input.requestId, model: config.model, system: input.system, user: input.user, fallback: input.fallback }),
         });
-        clearTimeout(timer);
         if (!response.ok) {
           lastFailure = "response_error";
-          await onAttempt?.({ attempt, success: false, latencyMs: null, failure: lastFailure });
+          await this.notifyAttempt(onAttempt, { attempt, success: false, latencyMs: null, failure: lastFailure });
           continue;
         }
-        const generated = responseContent(await response.json());
+        let payload: unknown;
+        try {
+          payload = await response.json();
+        } catch (error) {
+          if (error instanceof DOMException && error.name === "AbortError") throw error;
+          lastFailure = "response_error";
+          await this.notifyAttempt(onAttempt, { attempt, success: false, latencyMs: null, failure: lastFailure });
+          continue;
+        }
+        const generated = responseContent(payload);
         if (!generated) {
           lastFailure = "response_error";
-          await onAttempt?.({ attempt, success: false, latencyMs: null, failure: lastFailure });
+          await this.notifyAttempt(onAttempt, { attempt, success: false, latencyMs: null, failure: lastFailure });
           continue;
         }
-        this.latencyMs = Math.max(0, this.now() - startedAt);
-        this.failures = 0;
-        this.openUntil = 0;
-        this.lastFailure = null;
-        this.lastConnection = "connected";
-        await onAttempt?.({ attempt, success: true, latencyMs: this.latencyMs, failure: null });
+        state.latencyMs = Math.max(0, this.now() - startedAt);
+        state.failures = 0;
+        state.openUntil = 0;
+        state.lastFailure = null;
+        state.lastConnection = "connected";
+        await this.notifyAttempt(onAttempt, { attempt, success: true, latencyMs: state.latencyMs, failure: null });
         return { content: generated.content, provider: "hermes", model: generated.model };
       } catch (error) {
-        clearTimeout(timer);
         lastFailure = error instanceof DOMException && error.name === "AbortError" ? "timeout" : "network_error";
-        await onAttempt?.({ attempt, success: false, latencyMs: null, failure: lastFailure });
+        await this.notifyAttempt(onAttempt, { attempt, success: false, latencyMs: null, failure: lastFailure });
+      } finally {
+        clearTimeout(timer);
       }
     }
 
-    this.failures += 1;
-    this.lastFailure = lastFailure;
-    this.lastConnection = "degraded";
-    if (this.failures >= config.hermes.circuitFailureThreshold) this.openUntil = this.now() + config.hermes.circuitCooldownMs;
+    state.failures += 1;
+    state.lastFailure = lastFailure;
+    state.lastConnection = "degraded";
+    if (state.failures >= config.hermes.circuitFailureThreshold) state.openUntil = this.now() + config.hermes.circuitCooldownMs;
     throw new HermesUnavailableError(lastFailure);
+  }
+
+  private circuitState(isolationKey: string): HermesCircuitState {
+    const existing = this.circuitStates.get(isolationKey);
+    if (existing) return existing;
+    const created = createCircuitState();
+    this.circuitStates.set(isolationKey, created);
+    return created;
+  }
+
+  private async notifyAttempt(listener: AttemptListener | undefined, attempt: HermesAttempt) {
+    try {
+      await listener?.(attempt);
+    } catch (_error) {
+      // Telemetria não altera o resultado nem a classificação do transporte Hermes.
+    }
   }
 }

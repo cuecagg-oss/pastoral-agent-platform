@@ -8,15 +8,22 @@ const context: TenantContext = { organizationId: 1, organizationName: "Igreja A"
 
 class GatewayRepository implements PastoralRepository {
   audits: Array<{ action: string; metadata?: Record<string, unknown> }> = [];
+  messages: Array<{ role: "user" | "assistant" }> = [];
+  queryVisitorsCalls = 0;
+  failAuditActions = new Set<string>();
   queryCells() { return Promise.resolve(this.summary("consultar_celulas")); }
   queryReports() { return Promise.resolve(this.summary("consultar_relatorios")); }
   queryAttendance() { return Promise.resolve(this.summary("consultar_presenca")); }
-  queryVisitors() { return Promise.resolve(this.summary("consultar_visitantes")); }
+  queryVisitors() { this.queryVisitorsCalls += 1; return Promise.resolve(this.summary("consultar_visitantes")); }
   queryLeaders() { return Promise.resolve(this.summary("consultar_lideres")); }
   findVisitor() { return Promise.resolve(null); }
-  appendMessage() { return Promise.resolve(); }
+  appendMessage(input: { role: "user" | "assistant" }) { this.messages.push(input); return Promise.resolve(); }
   writeFollowup() { return Promise.resolve({ created: true, visitorName: "Ana" }); }
-  audit(input: { action: string; metadata?: Record<string, unknown> }) { this.audits.push(input); return Promise.resolve(); }
+  audit(input: { action: string; metadata?: Record<string, unknown> }) {
+    if (this.failAuditActions.has(input.action)) return Promise.reject(new Error("private audit detail"));
+    this.audits.push(input);
+    return Promise.resolve();
+  }
   private summary(tool: ToolResult["tool"]): ToolResult { return { tool, summary: "Resumo seguro", data: { organizationId: 1 } }; }
 }
 
@@ -83,5 +90,56 @@ describe("Agent Gateway", () => {
     expect(repository.audits).toContainEqual(expect.objectContaining({ action: "agent_gateway.hermes_attempt", requestId: "request-hermes-1", metadata: expect.objectContaining({ attempt: 1 }) }));
     expect(repository.audits).toContainEqual(expect.objectContaining({ action: "agent_gateway.respond", result: "hermes_response" }));
     expect(JSON.stringify(repository.audits)).not.toMatch(/secret-not-returned|hermes\.example/i);
+  });
+
+  it("preserva a resposta legada já persistida quando a auditoria final falha", async () => {
+    const repository = new GatewayRepository();
+    repository.failAuditActions.add("agent_gateway.respond");
+    let hermesCalls = 0;
+    const hermes = new HermesClient(async () => {
+      hermesCalls += 1;
+      return new Response(JSON.stringify({ content: "Resposta Hermes preservada.", model: "hermes-pilot" }), { status: 200 });
+    }, () => 100, "https://hermes.example/", "secret-not-returned");
+    const gateway = new AgentGateway(repository, new AgentCore(repository), async () => ({
+      enabled: true,
+      provider: "hermes",
+      model: "hermes-pilot",
+      hermes: { enabled: true, configured: true, model: "hermes-pilot", timeoutMs: 4_500, retries: 0, circuitFailureThreshold: 1, circuitCooldownMs: 30_000 },
+      fallbackPolicy: "deterministic",
+      source: "organization",
+    }), hermes);
+
+    const response = await gateway.respond({ context, conversationId: 5, message: "Quais visitantes chegaram recentemente?", requestId: "request-audit-outage" });
+
+    expect(response).toMatchObject({ provider: "hermes", content: "Resposta Hermes preservada.", gateway: { fallback: false } });
+    expect(hermesCalls).toBe(1);
+    expect(repository.queryVisitorsCalls).toBe(1);
+    expect(repository.messages.map(message => message.role)).toEqual(["user", "assistant"]);
+  });
+
+  it("isola o circuit breaker Hermes entre tenants também no fluxo legado", async () => {
+    const repository = new GatewayRepository();
+    let hermesCalls = 0;
+    const tenantB: TenantContext = { ...context, organizationId: 2, organizationName: "Igreja B", userId: 2 };
+    const hermes = new HermesClient(async (_url, init) => {
+      hermesCalls += 1;
+      const body = JSON.parse(String(init?.body)) as { requestId: string };
+      if (body.requestId === "legacy-tenant-a-failure") throw new Error("tenant A offline");
+      return new Response(JSON.stringify({ content: "Tenant B continua disponível.", model: "hermes-pilot" }), { status: 200 });
+    }, () => 100, "https://hermes.example/", "secret-not-returned");
+    const gateway = new AgentGateway(repository, new AgentCore(repository), async () => ({
+      enabled: true,
+      provider: "hermes",
+      model: "hermes-pilot",
+      hermes: { enabled: true, configured: true, model: "hermes-pilot", timeoutMs: 4_500, retries: 0, circuitFailureThreshold: 1, circuitCooldownMs: 30_000 },
+      fallbackPolicy: "deterministic",
+      source: "organization",
+    }), hermes);
+
+    await gateway.respond({ context, conversationId: 5, message: "Quais visitantes chegaram recentemente?", requestId: "legacy-tenant-a-failure" });
+    const responseB = await gateway.respond({ context: tenantB, conversationId: 6, message: "Quais visitantes chegaram recentemente?", requestId: "legacy-tenant-b-success" });
+
+    expect(responseB).toMatchObject({ provider: "hermes", content: "Tenant B continua disponível.", gateway: { fallback: false } });
+    expect(hermesCalls).toBe(2);
   });
 });
