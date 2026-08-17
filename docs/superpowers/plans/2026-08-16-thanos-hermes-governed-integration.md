@@ -93,8 +93,11 @@
 - Produces: evidência local atual e File List final.
 
 - [x] Rodar testes focalizados.
-- [x] Rodar `pnpm test` (129 aprovados; 9 bloqueados somente por banco de teste indisponível).
-- [x] Rodar `pnpm check`.
-- [x] Rodar `pnpm build`.
+- [x] Rodar `pnpm test`: 138 testes aprovados em 37 arquivos no sandbox MySQL 8.4.
+- [x] Rodar `pnpm check`: aprovado.
+- [x] Rodar `pnpm build`: aprovado.
+- [x] Aplicar migrations no MySQL 8.4 efêmero e isolado: aprovado.
+- [x] Comprovar isolamento entre proprietário, outro usuário da mesma organização e usuário de outra organização.
 - [x] Auditar `git diff --check`, `git diff --stat`, diff completo e `git status`.
 - [x] Atualizar checkboxes e registrar riscos residuais sem publicar ou fazer rollout.
+- [x] Registrar que a prova contra o Hermes remoto permanece pendente; nenhuma credencial Hermes foi utilizada, e piloto e Hermes continuam desativados.
